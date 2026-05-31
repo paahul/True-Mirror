@@ -17,9 +17,12 @@ between the Shortcut and the API — build both sides against it.
       "total": 235290
     },
     "sleep": {
-      "daily": [{ "date": "YYYY-MM-DD", "hours_asleep": 6.4, "hours_in_bed": 7.8 }],
+      "daily": [{ "date": "YYYY-MM-DD", "hours_asleep": 6.4, "hours_in_bed": 7.8, "deep_minutes": 65, "rem_minutes": 92, "awake_minutes": 28 }],
       "average_hours_asleep": 6.4,
-      "average_hours_in_bed": 7.8
+      "average_hours_in_bed": 7.8,
+      "avg_deep_minutes": 65,
+      "avg_rem_minutes": 92,
+      "avg_awake_minutes": 28
     },
     "heart_rate": {
       "resting_average": 68,
@@ -58,19 +61,21 @@ gracefully; Claude skips metrics it doesn't have data for.
 
 ## Token
 
-The Shortcut stores the token it receives from the first API response in a local variable
-(or iCloud via Shortcuts' built-in storage). On subsequent runs it reads and includes that
-token. This gives the user continuity across analyses without an account.
+The token is passed as a query param: `POST /api/analyze?token=abc123`
 
-- First run: omit `token` (or send `null`) → API creates a new token, returns it
-- All later runs: include the stored `token` → API looks up the existing user
+Tokens are provisioned manually in Supabase (one row per person in the `users` table).
+The token is hardcoded into the Shortcut URL before sharing. The API returns 401 for
+any unknown token, so only provisioned users can use it.
+
+To onboard someone: insert a row in `users` with their name, copy the generated token,
+paste it into the Shortcut URL, re-export, send them the link.
 
 ## HealthKit actions → fields
 
 | Payload field | HealthKit action | Notes |
 |---|---|---|
 | `steps.daily` | Find Health Samples → Step Count | Group by day, sum per day |
-| `sleep.daily` | Find Health Samples → Sleep Analysis | Filter `value = Asleep`, sum duration per night |
+| `sleep.daily` | Find Health Samples → Sleep Analysis | Filter by stage: `Asleep` for total, `AsleepDeep` for deep, `AsleepREM` for REM, `Awake` for awake — sum minutes per night per stage (iOS 16+) |
 | `heart_rate.daily_resting` | Find Health Samples → Resting Heart Rate | One value per day (Watch writes it ~morning) |
 | `hrv_ms.daily` | Find Health Samples → Heart Rate Variability | One value per day |
 | `vo2_max_ml_kg_min` | Find Health Samples → VO2 Max | Take the most recent value |

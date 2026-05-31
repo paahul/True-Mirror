@@ -73,7 +73,10 @@
         { "date": "2026-05-30", "hours_asleep": 5.2, "hours_in_bed": 7.3 }
       ],
       "average_hours_asleep": 6.2,
-      "average_hours_in_bed": 7.7
+      "average_hours_in_bed": 7.7,
+      "avg_deep_minutes": 62,
+      "avg_rem_minutes": 86,
+      "avg_awake_minutes": 34
     },
     "heart_rate": {
       "resting_average": 68,

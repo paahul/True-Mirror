@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeHealth } from '@/lib/claude'
-import { getOrCreateUser, saveReport } from '@/lib/supabase'
+import { getUserByToken, saveReport } from '@/lib/supabase'
 import type { AnalyzeRequest } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
-  let body: AnalyzeRequest
+  const token = req.nextUrl.searchParams.get('token')
+  if (!token) {
+    return NextResponse.json({ error: 'token query param is required' }, { status: 401 })
+  }
 
+  let body: AnalyzeRequest
   try {
     body = await req.json()
   } catch {
@@ -17,15 +21,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { token: incomingToken, save_history = true, health } = body
+    const user = await getUserByToken(token)
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
 
-    const user = await getOrCreateUser(incomingToken)
-    const analysis = await analyzeHealth(health)
+    const { save_history = true, health } = body
+    const analysis = await analyzeHealth(health, user.name)
 
     let reportId: string | null = null
-    if (save_history && user.save_history) {
+    if (save_history && user.opt_in) {
       try {
-        const report = await saveReport(user.token, analysis, health)
+        const report = await saveReport(user.id, analysis, health)
         reportId = report.id
       } catch (err) {
         console.error('Failed to save report (non-fatal):', err)

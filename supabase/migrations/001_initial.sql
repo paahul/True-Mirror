@@ -1,21 +1,22 @@
--- token-based user identity — no account, no email required
+-- users: manually provisioned per person, token embedded in their Shortcut URL
 create table users (
-  token        text primary key default gen_random_uuid()::text,
-  created_at   timestamptz not null default now(),
-  save_history boolean not null default true
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  token      text unique not null default gen_random_uuid()::text,
+  opt_in     boolean not null default true,
+  created_at timestamptz not null default now()
 );
 
 -- one row per analysis run
 create table reports (
-  id           uuid primary key default gen_random_uuid(),
-  user_token   text not null references users(token) on delete cascade,
-  analysis     text not null,
-  metrics      jsonb,          -- key metric snapshot for trend queries
-  created_at   timestamptz not null default now()
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references users(id) on delete cascade,
+  raw_data   jsonb not null,
+  analysis   text not null,
+  created_at timestamptz not null default now()
 );
 
-create index reports_user_token_idx on reports (user_token, created_at desc);
+create index reports_user_id_idx on reports (user_id, created_at desc);
 
--- enable RLS; server uses service role key so policy enforcement is on the app layer
 alter table users enable row level security;
 alter table reports enable row level security;

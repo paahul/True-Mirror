@@ -17,14 +17,15 @@ Rules:
 - Be direct. Say what the numbers actually mean.
 - Use the real figures. "Your resting HR of 72 is elevated for your activity level" not "your heart rate could be improved."
 - When trend data is present (marked with ↑ or ↓), lead with the trend. "Your HRV has dropped 18% in the last week" is more useful than "your HRV averages 42ms."
-- HRV context: below 30ms is poor, 30–50ms is average, above 60ms is good. Trend matters more than the number.
+- HRV context: below 30ms is poor, 30–50ms is average, above 60ms is good. Trend matters more than the absolute number.
 - VO2 max context: below 35 is poor, 35–45 is average, above 50 is good for adults.
-- Sleep context: under 7h asleep is a deficit. Time-in-bed minus time-asleep over 1.5h suggests poor sleep quality.
+- Sleep duration context: under 7h asleep is a deficit. Time-in-bed minus time-asleep over 1.5h suggests poor sleep quality.
+- Sleep stage context: deep sleep under 60min/night is low (90min+ is good); REM under 80min/night is low (100min+ is good); awake over 30min/night suggests fragmented sleep.
 - Keep it under 400 words total.
 - No nested bullet points — short punchy sentences only.
 - Do not add a preamble or sign-off.`
 
-// Returns "↑ 12% vs earlier" or "↓ 8% vs earlier" if the trend is >5%, otherwise null.
+// Returns "↑ 12% vs earlier" or "↓ 8% vs earlier" if trend is >5%, otherwise null.
 function detectTrend(daily: Array<{ date: string }>, getValue: (d: typeof daily[0]) => number): string | null {
   if (daily.length < 14) return null
   const sorted = [...daily].sort((a, b) => a.date.localeCompare(b.date))
@@ -49,12 +50,15 @@ function buildHealthSummary(health: HealthPayload): string {
   }
 
   if (health.sleep) {
-    const asleep = health.sleep.average_hours_asleep.toFixed(1)
-    const inBed = health.sleep.average_hours_in_bed?.toFixed(1) ?? '—'
-    const trend = health.sleep.daily
-      ? detectTrend(health.sleep.daily, (d) => (d as { hours_asleep: number }).hours_asleep)
-      : null
-    lines.push(`Sleep: avg ${asleep}h asleep, ${inBed}h in bed${trend ? ` (${trend})` : ''}`)
+    const { average_hours_asleep, average_hours_in_bed, avg_deep_minutes, avg_rem_minutes, avg_awake_minutes, daily } = health.sleep
+    const trend = daily ? detectTrend(daily, (d) => (d as { hours_asleep: number }).hours_asleep) : null
+    const stages = [
+      avg_deep_minutes != null ? `deep ${avg_deep_minutes}min` : null,
+      avg_rem_minutes != null ? `REM ${avg_rem_minutes}min` : null,
+      avg_awake_minutes != null ? `awake ${avg_awake_minutes}min` : null,
+    ].filter(Boolean).join(', ')
+    const stageStr = stages ? ` | ${stages}` : ''
+    lines.push(`Sleep: avg ${average_hours_asleep.toFixed(1)}h asleep, ${average_hours_in_bed?.toFixed(1) ?? '—'}h in bed${trend ? ` (${trend})` : ''}${stageStr}`)
   }
 
   if (health.heart_rate) {
@@ -107,8 +111,9 @@ function buildHealthSummary(health: HealthPayload): string {
   return lines.join('\n')
 }
 
-export async function analyzeHealth(health: HealthPayload): Promise<string> {
+export async function analyzeHealth(health: HealthPayload, name?: string): Promise<string> {
   const summary = buildHealthSummary(health)
+  const addressee = name ? `${name}'s` : 'this person\'s'
 
   const message = await client.messages.create({
     model: 'claude-opus-4-8',
@@ -123,7 +128,7 @@ export async function analyzeHealth(health: HealthPayload): Promise<string> {
     messages: [
       {
         role: 'user',
-        content: `Here is my Apple Health data for the last 30 days:\n\n${summary}\n\nGive me your honest analysis.`,
+        content: `Here is ${addressee} Apple Health data for the last 30 days:\n\n${summary}\n\nGive an honest analysis.`,
       },
     ],
   })

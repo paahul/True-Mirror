@@ -7,6 +7,9 @@ export interface DailySleep {
   date: string
   hours_asleep: number
   hours_in_bed?: number
+  deep_minutes?: number
+  rem_minutes?: number
+  awake_minutes?: number
 }
 
 export interface DailyHeartRate {
@@ -48,6 +51,9 @@ export interface HealthPayload {
     daily?: DailySleep[]
     average_hours_asleep: number
     average_hours_in_bed?: number
+    avg_deep_minutes?: number
+    avg_rem_minutes?: number
+    avg_awake_minutes?: number
   }
   heart_rate?: {
     resting_average: number
@@ -77,7 +83,6 @@ export interface HealthPayload {
 }
 
 export interface AnalyzeRequest {
-  token?: string
   save_history?: boolean
   health: HealthPayload
 }
