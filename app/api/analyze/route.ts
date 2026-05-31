@@ -3,6 +3,8 @@ import { analyzeHealth } from '@/lib/claude'
 import { getUserByToken, saveReport } from '@/lib/supabase'
 import type { AnalyzeRequest } from '@/lib/types'
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://truemirror.paahulhq.com'
+
 export async function POST(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
   if (!token) {
@@ -39,10 +41,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const shareUrl = reportId ? `${BASE_URL}/report/${reportId}` : null
+
     return NextResponse.json({
       token: user.token,
       analysis,
       report_id: reportId,
+      share_url: shareUrl,
       created_at: new Date().toISOString(),
     })
   } catch (err) {

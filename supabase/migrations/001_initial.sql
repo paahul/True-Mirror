@@ -1,8 +1,9 @@
--- users: manually provisioned per person, token embedded in their Shortcut URL
+-- users: self-serve registration via Shortcut, gated by invite code
 create table users (
   id         uuid primary key default gen_random_uuid(),
   name       text not null,
   token      text unique not null default gen_random_uuid()::text,
+  email      text,
   opt_in     boolean not null default true,
   created_at timestamptz not null default now()
 );

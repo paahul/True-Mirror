@@ -91,5 +91,16 @@ export interface AnalyzeResponse {
   token: string
   analysis: string
   report_id: string | null
+  share_url: string | null
   created_at: string
+}
+
+export interface RegisterRequest {
+  name: string
+  email?: string
+  invite_code?: string
+}
+
+export interface RegisterResponse {
+  token: string
 }
