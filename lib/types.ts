@@ -14,6 +14,11 @@ export interface DailyHeartRate {
   bpm: number
 }
 
+export interface DailyHRV {
+  date: string
+  ms: number
+}
+
 export interface DailyEnergy {
   date: string
   kcal: number
@@ -48,6 +53,11 @@ export interface HealthPayload {
     resting_average: number
     daily_resting?: DailyHeartRate[]
   }
+  hrv_ms?: {
+    average: number
+    daily?: DailyHRV[]
+  }
+  vo2_max_ml_kg_min?: number
   active_energy?: {
     daily?: DailyEnergy[]
     average: number

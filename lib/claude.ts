@@ -16,37 +16,88 @@ Format your response in exactly three sections with these bold headers:
 Rules:
 - Be direct. Say what the numbers actually mean.
 - Use the real figures. "Your resting HR of 72 is elevated for your activity level" not "your heart rate could be improved."
+- When trend data is present (marked with ↑ or ↓), lead with the trend. "Your HRV has dropped 18% in the last week" is more useful than "your HRV averages 42ms."
+- HRV context: below 30ms is poor, 30–50ms is average, above 60ms is good. Trend matters more than the number.
+- VO2 max context: below 35 is poor, 35–45 is average, above 50 is good for adults.
+- Sleep context: under 7h asleep is a deficit. Time-in-bed minus time-asleep over 1.5h suggests poor sleep quality.
 - Keep it under 400 words total.
 - No nested bullet points — short punchy sentences only.
 - Do not add a preamble or sign-off.`
+
+// Returns "↑ 12% vs earlier" or "↓ 8% vs earlier" if the trend is >5%, otherwise null.
+function detectTrend(daily: Array<{ date: string }>, getValue: (d: typeof daily[0]) => number): string | null {
+  if (daily.length < 14) return null
+  const sorted = [...daily].sort((a, b) => a.date.localeCompare(b.date))
+  const recent = sorted.slice(-7)
+  const earlier = sorted.slice(0, sorted.length - 7)
+  const recentAvg = recent.reduce((s, d) => s + getValue(d), 0) / recent.length
+  const earlierAvg = earlier.reduce((s, d) => s + getValue(d), 0) / earlier.length
+  if (earlierAvg === 0) return null
+  const pct = Math.round(((recentAvg - earlierAvg) / earlierAvg) * 100)
+  if (Math.abs(pct) < 5) return null
+  return pct > 0 ? `↑ ${pct}% vs earlier` : `↓ ${Math.abs(pct)}% vs earlier`
+}
 
 function buildHealthSummary(health: HealthPayload): string {
   const lines: string[] = [`Period: last ${health.period_days ?? 30} days`]
 
   if (health.steps) {
-    lines.push(`Steps: avg ${health.steps.average.toLocaleString()}/day, total ${health.steps.total.toLocaleString()}`)
+    const trend = health.steps.daily
+      ? detectTrend(health.steps.daily, (d) => (d as { count: number }).count)
+      : null
+    lines.push(`Steps: avg ${health.steps.average.toLocaleString()}/day, total ${health.steps.total.toLocaleString()}${trend ? ` (${trend})` : ''}`)
   }
+
   if (health.sleep) {
     const asleep = health.sleep.average_hours_asleep.toFixed(1)
     const inBed = health.sleep.average_hours_in_bed?.toFixed(1) ?? '—'
-    lines.push(`Sleep: avg ${asleep}h asleep, ${inBed}h in bed`)
+    const trend = health.sleep.daily
+      ? detectTrend(health.sleep.daily, (d) => (d as { hours_asleep: number }).hours_asleep)
+      : null
+    lines.push(`Sleep: avg ${asleep}h asleep, ${inBed}h in bed${trend ? ` (${trend})` : ''}`)
   }
+
   if (health.heart_rate) {
-    lines.push(`Resting heart rate: avg ${health.heart_rate.resting_average} bpm`)
+    const trend = health.heart_rate.daily_resting
+      ? detectTrend(health.heart_rate.daily_resting, (d) => (d as { bpm: number }).bpm)
+      : null
+    lines.push(`Resting heart rate: avg ${health.heart_rate.resting_average} bpm${trend ? ` (${trend})` : ''}`)
   }
+
+  if (health.hrv_ms) {
+    const trend = health.hrv_ms.daily
+      ? detectTrend(health.hrv_ms.daily, (d) => (d as { ms: number }).ms)
+      : null
+    lines.push(`HRV: avg ${health.hrv_ms.average} ms${trend ? ` (${trend})` : ''}`)
+  }
+
+  if (health.vo2_max_ml_kg_min != null) {
+    lines.push(`VO2 max: ${health.vo2_max_ml_kg_min} ml/kg/min`)
+  }
+
   if (health.active_energy) {
-    lines.push(`Active energy burned: avg ${health.active_energy.average} kcal/day`)
+    const trend = health.active_energy.daily
+      ? detectTrend(health.active_energy.daily, (d) => (d as { kcal: number }).kcal)
+      : null
+    lines.push(`Active energy burned: avg ${health.active_energy.average} kcal/day${trend ? ` (${trend})` : ''}`)
   }
+
   if (health.exercise_minutes) {
-    lines.push(`Exercise: avg ${health.exercise_minutes.average} min/day`)
+    const trend = health.exercise_minutes.daily
+      ? detectTrend(health.exercise_minutes.daily, (d) => (d as { minutes: number }).minutes)
+      : null
+    lines.push(`Exercise: avg ${health.exercise_minutes.average} min/day${trend ? ` (${trend})` : ''}`)
   }
+
   if (health.workouts?.length) {
     const types = [...new Set(health.workouts.map((w) => w.type))].join(', ')
     lines.push(`Workouts: ${health.workouts.length} sessions (${types})`)
   }
+
   if (health.stand_hours) {
     lines.push(`Stand hours: avg ${health.stand_hours.daily_average}/day`)
   }
+
   if (health.weight_kg) {
     const delta = health.weight_kg.change_30d
     const sign = delta >= 0 ? '+' : ''
