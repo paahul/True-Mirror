@@ -32,16 +32,29 @@ export interface DailyExercise {
   minutes: number
 }
 
+export interface DailyRespiratoryRate {
+  date: string
+  breaths_per_min: number
+}
+
+export interface DailySpO2 {
+  date: string
+  pct: number
+}
+
 export interface Workout {
   date: string
   type: string
   duration_minutes: number
   calories?: number
   distance_km?: number
+  avg_hr_bpm?: number
+  max_hr_bpm?: number
 }
 
 export interface HealthPayload {
   period_days?: number
+  age_years?: number
   steps?: {
     daily?: DailySteps[]
     average: number
@@ -64,6 +77,14 @@ export interface HealthPayload {
     daily?: DailyHRV[]
   }
   vo2_max_ml_kg_min?: number
+  respiratory_rate?: {
+    avg_breaths_per_min: number
+    daily?: DailyRespiratoryRate[]
+  }
+  spo2_percent?: {
+    average: number
+    daily?: DailySpO2[]
+  }
   active_energy?: {
     daily?: DailyEnergy[]
     average: number
