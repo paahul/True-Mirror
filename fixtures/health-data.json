@@ -1,0 +1,76 @@
+{
+  "token": null,
+  "save_history": false,
+  "health": {
+    "period_days": 30,
+    "steps": {
+      "daily": [
+        { "date": "2026-05-01", "count": 9234 },
+        { "date": "2026-05-02", "count": 6102 },
+        { "date": "2026-05-03", "count": 11847 },
+        { "date": "2026-05-04", "count": 4320 },
+        { "date": "2026-05-05", "count": 7651 }
+      ],
+      "average": 7843,
+      "total": 235290
+    },
+    "sleep": {
+      "daily": [
+        { "date": "2026-05-01", "hours_asleep": 6.2, "hours_in_bed": 7.5 },
+        { "date": "2026-05-02", "hours_asleep": 5.8, "hours_in_bed": 7.2 },
+        { "date": "2026-05-03", "hours_asleep": 7.1, "hours_in_bed": 8.0 },
+        { "date": "2026-05-04", "hours_asleep": 6.5, "hours_in_bed": 7.8 },
+        { "date": "2026-05-05", "hours_asleep": 6.4, "hours_in_bed": 7.9 }
+      ],
+      "average_hours_asleep": 6.4,
+      "average_hours_in_bed": 7.8
+    },
+    "heart_rate": {
+      "resting_average": 68,
+      "daily_resting": [
+        { "date": "2026-05-01", "bpm": 66 },
+        { "date": "2026-05-02", "bpm": 70 },
+        { "date": "2026-05-03", "bpm": 65 },
+        { "date": "2026-05-04", "bpm": 72 },
+        { "date": "2026-05-05", "bpm": 67 }
+      ]
+    },
+    "active_energy": {
+      "daily": [
+        { "date": "2026-05-01", "kcal": 480 },
+        { "date": "2026-05-02", "kcal": 310 },
+        { "date": "2026-05-03", "kcal": 620 },
+        { "date": "2026-05-04", "kcal": 290 },
+        { "date": "2026-05-05", "kcal": 410 }
+      ],
+      "average": 412
+    },
+    "exercise_minutes": {
+      "daily": [
+        { "date": "2026-05-01", "minutes": 28 },
+        { "date": "2026-05-02", "minutes": 0 },
+        { "date": "2026-05-03", "minutes": 45 },
+        { "date": "2026-05-04", "minutes": 0 },
+        { "date": "2026-05-05", "minutes": 22 }
+      ],
+      "average": 22
+    },
+    "workouts": [
+      { "date": "2026-05-03", "type": "Running", "duration_minutes": 42, "calories": 390, "distance_km": 6.1 },
+      { "date": "2026-05-06", "type": "Cycling", "duration_minutes": 55, "calories": 480, "distance_km": 18.4 },
+      { "date": "2026-05-10", "type": "Running", "duration_minutes": 35, "calories": 320, "distance_km": 5.0 },
+      { "date": "2026-05-13", "type": "Running", "duration_minutes": 28, "calories": 260, "distance_km": 4.2 },
+      { "date": "2026-05-17", "type": "Cycling", "duration_minutes": 60, "calories": 510 },
+      { "date": "2026-05-20", "type": "Running", "duration_minutes": 38, "calories": 350, "distance_km": 5.5 },
+      { "date": "2026-05-24", "type": "Running", "duration_minutes": 32, "calories": 295, "distance_km": 4.8 },
+      { "date": "2026-05-28", "type": "Walking", "duration_minutes": 65, "calories": 290, "distance_km": 5.8 }
+    ],
+    "stand_hours": {
+      "daily_average": 9
+    },
+    "weight_kg": {
+      "latest": 82.4,
+      "change_30d": -0.8
+    }
+  }
+}
