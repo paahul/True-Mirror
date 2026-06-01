@@ -1,184 +1,75 @@
 # True Mirror
 
-Your health data, reflected honestly.
+**Your health data, reflected honestly.**
 
-An iOS Shortcut reads your last 30 days of Apple Health & Fitness data, sends a compact
-summary to a private API, and Claude returns a direct, no-sugarcoating analysis — what's
-working, what needs attention, and three concrete things to do this week. In about ten
-seconds. No App Store, no 2GB export, no login.
+True Mirror reads your last 30 days of Apple Health and Apple Fitness data via an iOS Shortcut, sends a compact summary to Claude, and hands back a direct, no-sugarcoating read: what's working, what needs attention, and three things to do this week. In about ten seconds.
 
-**Live:** [truemirror.paahulhq.com](https://truemirror.paahulhq.com)
+No App Store. No 2GB export. No login.
 
----
+**Live:** [truemirror.paahulhq.com](https://truemirror.paahulhq.com) (currently a small private beta — invite by [email](mailto:sikandpaahul@gmail.com?subject=True%20Mirror%20invite))
 
-## The interesting bits
+## What you get
 
-A few decisions worth calling out:
+A read you can act on, not a dashboard to interpret. A sample:
 
-**Shortcuts as a data pipeline.** The whole project hinges on one underused fact: iOS
-Shortcuts has native HealthKit access. So instead of a native app (App Store, $99/yr, a
-download per person) or the dreaded "Export All Health Data" (30–45 min, locks your phone,
-2GB XML), the Shortcut reads your metrics and POSTs a summary to a Next.js API. You install
-by tapping a link; your phone stays usable. This sits in a gap two groups rarely cross —
-people who know Shortcuts well, and people who build web backends — which is why a clean
-deployable version of it basically didn't exist.
+> **What's working** — Your aerobic base is holding. VO₂ max of 41 hasn't slipped despite the lighter month.
+>
+> **What needs attention** — HRV dropped 31% to 44ms and resting HR is up to 68. You're recovering worse while training less. That's stress, not fatigue.
+>
+> **Three things to do this week** — Fix the 90-minute gap between lights-out and asleep. Track HRV daily back above 50. Three easy zone-2 walks before any hard session.
 
-**Calibrated honesty is the product.** Most health apps cheer you on — streaks, rings,
-badges. True Mirror reads what's actually in the data and says it: your sleep's been slipping
-for three weeks, your resting HR is climbing, you haven't trained in a month. The mirror
-metaphor is the whole point — show what's there, not what you want to see.
+Behind the words are four signals, each grounded in published methods rather than invented:
 
-**Scores grounded in published methods, not vibes.** Before Claude sees anything, the server
-computes four signals from your raw numbers: **Sleep** (Oura-style stage weighting),
-**Recovery** (Altini / HRV4Training — recent HRV vs your 30-day baseline + resting-HR
-deviation + sleep), **Strain** (Banister TRIMP from per-workout heart rate, with a calorie
-fallback), and a **Stress** level (HRV suppression your training load doesn't explain). The
-scores orient Claude; Claude grounds its prose in the raw figures.
+- **Recovery** — HRV vs. your own baseline, plus resting HR and sleep. Are you ready to push or should you back off? (Altini / HRV4Training method.)
+- **Sleep** — Duration plus deep/REM/efficiency, weighted in the spirit of Oura, not just hours in bed.
+- **Strain** — Training load from your workouts' heart rate (Banister TRIMP), or activity when HR isn't available.
+- **Stress** — HRV suppression that your training load doesn't explain. Life stress, not just fatigue.
 
-**Scores are recomputed, not stored.** The database keeps only the raw payload and the
-analysis text — never the scores. The history endpoint recomputes them from each report's
-`raw_data` on read, so the trend charts work retroactively and there's a single source of
-truth for the math.
-
-**The referral loop is a URL.** Every saved analysis gets a shareable `/report/[id]` page
-with a "Get True Mirror" CTA. Someone shares their read; the next person taps the CTA.
-
-**Incentives aligned on the Watch-charging problem.** People take their Watch off to charge
-and forget to put it back on — and patchy data means worse analysis. True Mirror's value goes
-up the more consistently you wear it, so optional charge/wear reminders (opt-in, your chosen
-times) are squarely in the product's interest, not a dark pattern.
-
----
-
-## Status
-
-| Milestone | What it is | Status |
-|---|---|---|
-| **M1 — Backend** | Supabase schema, register/analyze/cron routes, server-side scores, shareable report pages — deployed to a custom domain with SSL | ✅ Shipped |
-| **M2 — iOS Shortcut** | HealthKit → JSON → POST → analysis. MVP (steps/RHR/energy/exercise) works on-device; full metric capture next | 🟡 In progress |
-| **M3 — History UI** | `/history` page: Recovery/Sleep trend charts, score chips, expandable analyses, mode + opt-out toggles | ✅ Shipped |
-| **M4 — Onboard first friend** | Manual provisioning + permission walkthrough; validate the real-world flow before automating it | ⏳ Next |
-| **M5 — Registration flow** | Self-serve first-run (name/email/mode → token) so one link self-provisions everyone | ⏳ Planned |
-| **M6 — UI tuning** | Polish report + history pages once there's real usage | ⏳ Planned |
-| **M7 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏳ Planned |
-
-There's an open architecture question — whether to keep aggregating in the Shortcut or send
-raw samples and aggregate server-side — written up in
-[`docs/architecture-thin-shortcut.md`](docs/architecture-thin-shortcut.md).
-
----
+The scoring uses citable methods, so you can check the math.
 
 ## How it works
 
-```
-  iPhone                         Vercel (Next.js)                   Services
-┌──────────────┐  POST summary  ┌────────────────────┐
-│ iOS Shortcut │ ─────────────▶ │ /api/analyze?token │
-│  (HealthKit) │   JSON body    └─────────┬──────────┘
-└──────────────┘                          │
-                          ┌───────────────┼────────────────┐
-                          ▼               ▼                ▼
-                   computeScores()   Claude API      getUserByToken()
-                   (lib/scores.ts) (Sonnet, analysis)  (Supabase)
-                          │               │                │
-                          └───────┬───────┘                │
-                                  ▼                         ▼
-                            analysis text  ──────▶  ┌──────────────────┐
-                                                    │ Supabase reports │ (opt-in)
-                                                    │ raw_data, text   │
-                                                    └────────┬─────────┘
-                                                             │
-                          ┌──────────────────────────────────┼─────────────────┐
-                          ▼                                  ▼
-                  /report/[id] (shareable)         /history?token= (charts, chips)
-                                                   scores recomputed from raw_data
-```
+1. **Tap the Shortcut.** You install it by tapping a link someone sends you. No App Store, no Xcode.
+2. **Allow Health access.** iOS asks once which data it can read. It only reads, and never changes anything.
+3. **Claude reads 30 days.** Recent steps, sleep, heart rate, HRV, and workouts get analyzed against the methods above.
+4. **Get your report (~10s).** Saved, if you want, so you can watch trends over time.
 
-Loading a report or history page is just a Supabase read — no AI call per view. A daily
-Vercel Cron (`/api/cron/nudge`) handles reminder emails (stubbed until Resend is wired).
+## Privacy
 
----
+Only computed summaries leave your phone, never a raw dump of your health history. Saving reports to track trends is opt-in, and you can turn it off any time. Because the scoring uses published, citable methods, you can verify what the numbers mean.
 
-## Tech stack
+## Why this exists
 
-| Layer | Choice |
-|---|---|
-| Framework | Next.js 15 (App Router) + React 19 + TypeScript |
-| AI | Anthropic Claude (Sonnet 4.6) via `@anthropic-ai/sdk`, prompt caching on the system prompt |
-| Data pipeline | iOS Shortcuts → HealthKit (no native app, no XML export) |
-| DB | Supabase Postgres (`users`, `reports`); service-role access, RLS on |
-| Scoring | Server-side — Oura-style sleep, Altini/HRV4Training recovery, Banister TRIMP strain |
-| Email | Resend (cron-driven reminders — wiring pending) |
-| Hosting | Vercel (custom domain via Cloudflare DNS) |
+Every existing way to get AI analysis on your Apple Health data has a meaningful catch.
 
-UI is deliberately dependency-light — no component or chart library; the trend charts are
-hand-rolled inline SVG.
+**Paid apps (Athlytic, Gentler Streak, Helia)** work well, but they're native iOS apps. Each person has to independently discover, download, and set them up. You can't just send someone a link and have them running in 60 seconds.
+
+**Stanford's HealthGPT** is the best-known open-source version (1.9k stars, genuinely good work). But it's Swift you compile in Xcode and sideload yourself. Not something you hand to a friend who doesn't own a Mac.
+
+**DIY projects** almost all rely on Apple's built-in export. That takes 30–45 minutes, locks up your phone the whole time, and produces a 2GB XML file. Painful enough that most people who try it once never do it again.
+
+**The gap:** iOS Shortcuts has native HealthKit access. You can read specific metrics — steps, sleep stages, HRV, resting heart rate, workouts, VO₂ max — format them as JSON, and POST to an API in seconds. No App Store, no Xcode, no export. The phone stays usable.
+
+The reason nobody packaged this cleanly is that it sits at the intersection of two groups that rarely overlap: people who know Shortcuts well enough to use it as a data pipeline, and people who can build and deploy a web backend. True Mirror is that intersection.
+
+## Stack
+
+- Next.js + Vercel
+- Supabase
+- Claude API
+- iOS Shortcuts
+
+## Getting started
+
+If someone sent you the Shortcut link, setup takes about two minutes:
+
+1. Tap the link → **Add Shortcut**.
+2. Settings → Shortcuts → Advanced → turn on **Allow Sharing Large Amounts of Data**.
+3. Run it → **Allow** the Health prompts, then **Always Allow** sending your summary.
+4. Read your analysis. Tap the Shortcut anytime to run it again.
+
+[Request an invite →](mailto:sikandpaahul@gmail.com?subject=True%20Mirror%20invite)
 
 ---
 
-## Local setup
-
-```bash
-git clone https://github.com/paahul/True-Mirror.git
-cd True-Mirror
-npm install
-cp .env.example .env.local   # fill in your own keys
-npm run dev                  # http://localhost:3000
-```
-
-You'll need:
-- **Anthropic** API key — https://console.anthropic.com (required)
-- **Supabase** project — https://supabase.com (required). Run `supabase/migrations/001_initial.sql`
-  in the SQL editor, then set `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
-- `INVITE_CODE` — any value; gates self-serve registration (same value goes in the Shortcut).
-- **Resend** — only when wiring up reminder emails.
-
-Test the pipeline without a Shortcut: create a user (`INSERT INTO users (name) VALUES ('Test') RETURNING token;`),
-then `curl -X POST "http://localhost:3000/api/analyze?token=TOKEN" -H "Content-Type: application/json" -d @fixtures/health-data.json`.
-The fixture has a deliberate declining pattern (HRV falling, sleep worsening) → expect Recovery ~35–45, Stress high.
-
-The iOS Shortcut is built in the Shortcuts app — see the step-by-step guides in
-[`docs/`](docs/) (`shortcut-mvp-build.md`, `shortcut-enrichment-build.md`).
-
----
-
-## Cost notes
-
-Built to run at friends-and-family scale for roughly nothing:
-
-- Anthropic (Sonnet 4.6) — roughly a cent or so per analysis with prompt caching on
-- Supabase free tier — 500 MB DB, plenty for this
-- Vercel Hobby — free (cron capped at daily; hourly reminders need Pro)
-- Resend free tier — 100 emails/day
-
-Recurring cost for a personal deploy: ~$0/month + pennies per analysis.
-
----
-
-## What's next
-
-- Full metric capture in the Shortcut (sleep, HRV, workouts, VO₂ max) → unlock the Recovery
-  and Sleep scores end-to-end on real data
-- Decide the thin-Shortcut vs fat-Shortcut architecture (see `docs/`)
-- Self-serve registration flow so one link onboards anyone
-- Per-mode Claude prompts (curious / active / performance) and data-gap detection
-- Polish pass on the report + history UI
-
----
-
-## Project docs
-
-- [`why.md`](why.md) — why this exists, the competitive gap, the Watch-charging angle
-- [`plan.md`](plan.md) — full build plan, milestones, payload spec, open questions
-- [`docs/`](docs/) — Shortcut build guides, friend install + permissions, architecture notes, learnings log
-- [`CLAUDE.md`](CLAUDE.md) — context for working on this with Claude Code
-
----
-
-## Why I built this
-
-A real itch — I wanted an honest read on my own Apple Health data without a native app or the
-2GB-export ordeal — and a way to learn full-stack AI product building end to end: structured
-prompt design and server-side scoring with Claude, a Supabase-backed referral loop, and the
-genuinely awkward last mile of shipping through iOS Shortcuts. The honesty framing isn't a
-gimmick; it's the kind of product I actually want to exist.
+Built by [Paahul](https://paahulhq.com). Reads Apple Health, analyzed by Claude.
