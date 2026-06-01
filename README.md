@@ -79,7 +79,7 @@ raw samples and aggregate server-side — written up in
                           ┌───────────────┼────────────────┐
                           ▼               ▼                ▼
                    computeScores()   Claude API      getUserByToken()
-                   (lib/scores.ts)  (Opus, analysis)  (Supabase)
+                   (lib/scores.ts) (Sonnet, analysis)  (Supabase)
                           │               │                │
                           └───────┬───────┘                │
                                   ▼                         ▼
@@ -104,7 +104,7 @@ Vercel Cron (`/api/cron/nudge`) handles reminder emails (stubbed until Resend is
 | Layer | Choice |
 |---|---|
 | Framework | Next.js 15 (App Router) + React 19 + TypeScript |
-| AI | Anthropic Claude (Opus) via `@anthropic-ai/sdk`, prompt caching on the system prompt |
+| AI | Anthropic Claude (Sonnet 4.6) via `@anthropic-ai/sdk`, prompt caching on the system prompt |
 | Data pipeline | iOS Shortcuts → HealthKit (no native app, no XML export) |
 | DB | Supabase Postgres (`users`, `reports`); service-role access, RLS on |
 | Scoring | Server-side — Oura-style sleep, Altini/HRV4Training recovery, Banister TRIMP strain |
@@ -146,7 +146,7 @@ The iOS Shortcut is built in the Shortcuts app — see the step-by-step guides i
 
 Built to run at friends-and-family scale for roughly nothing:
 
-- Anthropic (Opus) — a few cents per analysis with prompt caching on
+- Anthropic (Sonnet 4.6) — roughly a cent or so per analysis with prompt caching on
 - Supabase free tier — 500 MB DB, plenty for this
 - Vercel Hobby — free (cron capped at daily; hourly reminders need Pro)
 - Resend free tier — 100 emails/day

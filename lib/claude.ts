@@ -156,7 +156,7 @@ export async function analyzeHealth(health: HealthPayload, name?: string): Promi
   const addressee = name ? `${name}'s` : "this person's"
 
   const message = await client.messages.create({
-    model: 'claude-opus-4-8',
+    model: 'claude-sonnet-4-6',
     max_tokens: 900,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages: [{
