@@ -73,6 +73,7 @@ docs/shortcut-enrichment-build.md   Full metric capture + daily-array pattern
 docs/architecture-thin-shortcut.md  Open decision: thin Shortcut + server-side aggregation
 docs/friend-install-guide.md        Manual onboarding + permission walkthrough for friends
 docs/shortcut-registration-build.md Deferred: self-serve first-run registration flow
+docs/learnings.md                   Running log of insights/decisions + who caught them
 ```
 
 ## Architecture decisions made
