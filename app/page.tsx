@@ -280,7 +280,13 @@ export default function Home() {
 
       {/* Footer */}
       <footer style={{ marginTop: 80, paddingTop: 24, borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 13, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-        <span>Built by Paahul · reads Apple Health, analysed by Claude.</span>
+        <span>
+          Built by{' '}
+          <a href="https://paahulhq.com" style={{ color: MUTED, textDecoration: 'underline' }}>
+            Paahul
+          </a>{' '}
+          · reads Apple Health, analysed by Claude.
+        </span>
         <a href="https://github.com/paahul/True-Mirror" style={{ color: MUTED }}>
           Source on GitHub →
         </a>
