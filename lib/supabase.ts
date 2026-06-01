@@ -25,6 +25,13 @@ export interface PublicReport {
   created_at: string
 }
 
+export interface FullReport {
+  id: string
+  raw_data: HealthPayload
+  analysis: string
+  created_at: string
+}
+
 export async function getUserByToken(token: string): Promise<User | null> {
   const { data } = await supabase
     .from('users')
@@ -87,6 +94,31 @@ export async function getReportById(id: string): Promise<PublicReport | null> {
     .single()
 
   return (data as PublicReport) ?? null
+}
+
+export async function getReportsByUser(userId: string): Promise<FullReport[]> {
+  const { data } = await supabase
+    .from('reports')
+    .select('id, raw_data, analysis, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  return (data as FullReport[]) ?? []
+}
+
+export async function updateUser(
+  userId: string,
+  patch: { mode?: UserMode; opt_in?: boolean },
+): Promise<User> {
+  const { data, error } = await supabase
+    .from('users')
+    .update(patch)
+    .eq('id', userId)
+    .select('id, name, token, email, mode, opt_in, timezone, charge_reminder, charge_reminder_at, wear_reminder, wear_reminder_at')
+    .single()
+
+  if (error || !data) throw new Error(`Failed to update user: ${error?.message}`)
+  return data as User
 }
 
 export async function getUsersWithReminders(): Promise<User[]> {

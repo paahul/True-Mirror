@@ -1,11 +1,6 @@
-import type { HealthPayload } from './types'
+import type { HealthPayload, HealthScores } from './types'
 
-export interface HealthScores {
-  sleep: number | null
-  recovery: number | null
-  strain: number | null
-  stress: 'low' | 'moderate' | 'high' | null
-}
+export type { HealthScores }
 
 export function computeScores(health: HealthPayload): HealthScores {
   const sleep = computeSleepScore(health)

@@ -1,5 +1,12 @@
 export type UserMode = 'curious' | 'active' | 'performance'
 
+export interface HealthScores {
+  sleep: number | null
+  recovery: number | null
+  strain: number | null
+  stress: 'low' | 'moderate' | 'high' | null
+}
+
 export interface DailySteps {
   date: string
   count: number
@@ -132,4 +139,25 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   token: string
+}
+
+export interface HistoryReport {
+  id: string
+  created_at: string
+  analysis: string
+  scores: HealthScores
+}
+
+export interface HistoryResponse {
+  user: {
+    name: string
+    mode: UserMode
+    opt_in: boolean
+  }
+  reports: HistoryReport[]
+}
+
+export interface UpdateUserRequest {
+  mode?: UserMode
+  opt_in?: boolean
 }
