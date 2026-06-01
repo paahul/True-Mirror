@@ -8,15 +8,21 @@ Read `plan.md` and `why.md` for full context before doing anything.
 
 ## Current status
 
-**Backend is code-complete but not deployed.** Everything in `app/` and `lib/` is written and committed. The next session should focus on deployment and the iOS Shortcut.
+**Backend is DEPLOYED and verified in production (2026-05-31).** Live at https://truemirror.paahulhq.com (custom domain, SSL issued). Smoke-tested end-to-end: register → analyze (Claude) → save report → shareable report page all work. DB is empty (test data cleaned up).
+
+Deployment details:
+- **Supabase**: project ref `eoakiwolgmelbpfttgmu`, region East US (Ohio), own org "true-mirror". Migration `001_initial.sql` applied (`users` + `reports` tables, RLS on). App uses the service-role key (bypasses RLS) — no anon access path.
+- **Vercel**: project `paahul-s-projects/true-mirror`, GitHub repo connected (auto-deploys on push to `main`). All 5 env vars set in Production. Deploy via `vercel deploy --prod` from repo root, or push to `main`.
+- **DNS**: `truemirror.paahulhq.com` → `A 76.76.21.21` in Cloudflare, **DNS only (grey cloud)** — must stay grey or Vercel SSL breaks (525).
+- **Cron**: on Hobby plan, capped at daily — currently `0 13 * * *`. Revert to hourly (`0 * * * *`) when on Pro + email is wired (see plan.md Phase 4).
 
 ## What to do next (in order)
 
-1. **Deploy Supabase**: create project at supabase.com, paste `supabase/migrations/001_initial.sql` into the SQL editor, run it
-2. **Deploy Vercel**: connect GitHub repo (auto-detects Next.js), set env vars (see below), add DNS for truemirror.paahulhq.com
-3. **Smoke test the API**: `curl -X POST "https://truemirror.paahulhq.com/api/analyze?token=YOUR_TOKEN" -H "Content-Type: application/json" -d @fixtures/health-data.json`
-4. **Build the iOS Shortcut** — see `docs/shortcut-payload.md` for the full spec
-5. **Wire up email** — install Resend, uncomment `sendEmail()` in `app/api/cron/nudge/route.ts`
+1. **Build the iOS Shortcut** — see `docs/shortcut-payload.md` for the full spec. This is the next focus.
+2. **Test on iPhone** against real Health data, iterate on the Claude prompt.
+3. **Wire up email** — install Resend, uncomment `sendEmail()` in `app/api/cron/nudge/route.ts`, add `RESEND_API_KEY` to Vercel.
+
+Smoke-test recipe (no Shortcut needed): insert a user via Supabase SQL editor (`INSERT INTO users (name) VALUES ('Test') RETURNING token;`), then `curl -X POST "https://truemirror.paahulhq.com/api/analyze?token=TOKEN" -H "Content-Type: application/json" -d @fixtures/health-data.json`. Note the fixture has `save_history:false` (stateless); set it true to test the report-save path.
 
 ## Env vars needed
 
