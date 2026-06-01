@@ -36,7 +36,7 @@ Rules:
 - No nested bullet points — short punchy sentences only.
 - Do not add a preamble or sign-off.`
 
-function detectTrend(daily: Array<{ date: string }>, getValue: (d: typeof daily[0]) => number): string | null {
+function detectTrend<T extends { date: string }>(daily: T[], getValue: (d: T) => number): string | null {
   if (daily.length < 14) return null
   const sorted = [...daily].sort((a, b) => a.date.localeCompare(b.date))
   const recent  = sorted.slice(-7)
@@ -67,14 +67,14 @@ function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof com
 
   if (health.steps) {
     const trend = health.steps.daily
-      ? detectTrend(health.steps.daily, (d) => (d as { count: number }).count)
+      ? detectTrend(health.steps.daily, (d) => d.count)
       : null
     lines.push(`Steps: avg ${health.steps.average.toLocaleString()}/day, total ${health.steps.total.toLocaleString()}${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.sleep) {
     const { average_hours_asleep, average_hours_in_bed, avg_deep_minutes, avg_rem_minutes, avg_awake_minutes, daily } = health.sleep
-    const trend    = daily ? detectTrend(daily, (d) => (d as { hours_asleep: number }).hours_asleep) : null
+    const trend    = daily ? detectTrend(daily, (d) => d.hours_asleep) : null
     const stageParts = [
       avg_deep_minutes  != null ? `deep ${avg_deep_minutes}min`  : null,
       avg_rem_minutes   != null ? `REM ${avg_rem_minutes}min`    : null,
@@ -85,14 +85,14 @@ function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof com
 
   if (health.heart_rate) {
     const trend = health.heart_rate.daily_resting
-      ? detectTrend(health.heart_rate.daily_resting, (d) => (d as { bpm: number }).bpm)
+      ? detectTrend(health.heart_rate.daily_resting, (d) => d.bpm)
       : null
     lines.push(`Resting HR: avg ${health.heart_rate.resting_average} bpm${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.hrv_ms) {
     const trend = health.hrv_ms.daily
-      ? detectTrend(health.hrv_ms.daily, (d) => (d as { ms: number }).ms)
+      ? detectTrend(health.hrv_ms.daily, (d) => d.ms)
       : null
     lines.push(`HRV: avg ${health.hrv_ms.average} ms${trend ? ` (${trend})` : ''}`)
   }
@@ -103,28 +103,28 @@ function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof com
 
   if (health.respiratory_rate) {
     const trend = health.respiratory_rate.daily
-      ? detectTrend(health.respiratory_rate.daily, (d) => (d as { breaths_per_min: number }).breaths_per_min)
+      ? detectTrend(health.respiratory_rate.daily, (d) => d.breaths_per_min)
       : null
     lines.push(`Respiratory rate (sleep): avg ${health.respiratory_rate.avg_breaths_per_min} breaths/min${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.spo2_percent) {
     const trend = health.spo2_percent.daily
-      ? detectTrend(health.spo2_percent.daily, (d) => (d as { pct: number }).pct)
+      ? detectTrend(health.spo2_percent.daily, (d) => d.pct)
       : null
     lines.push(`Blood oxygen (SpO2): avg ${health.spo2_percent.average}%${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.active_energy) {
     const trend = health.active_energy.daily
-      ? detectTrend(health.active_energy.daily, (d) => (d as { kcal: number }).kcal)
+      ? detectTrend(health.active_energy.daily, (d) => d.kcal)
       : null
     lines.push(`Active energy: avg ${health.active_energy.average} kcal/day${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.exercise_minutes) {
     const trend = health.exercise_minutes.daily
-      ? detectTrend(health.exercise_minutes.daily, (d) => (d as { minutes: number }).minutes)
+      ? detectTrend(health.exercise_minutes.daily, (d) => d.minutes)
       : null
     lines.push(`Exercise: avg ${health.exercise_minutes.average} min/day${trend ? ` (${trend})` : ''}`)
   }
