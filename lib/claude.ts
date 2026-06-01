@@ -4,6 +4,9 @@ import { computeScores } from './scores'
 
 const client = new Anthropic()
 
+// Single source of truth for the analysis model — swap here, nowhere else.
+export const ANALYSIS_MODEL = 'claude-sonnet-4-6'
+
 const SYSTEM_PROMPT = `You are a direct, honest health coach analysing 30 days of Apple Health data. No sugarcoating. No generic advice. React to the actual numbers in front of you.
 
 The data begins with computed scores derived from the raw metrics using published HRV and sleep research (Altini/HRV4Training for recovery, Banister TRIMP for strain). Use the scores as orientation — ground your analysis in the raw numbers below them.
@@ -156,7 +159,7 @@ export async function analyzeHealth(health: HealthPayload, name?: string): Promi
   const addressee = name ? `${name}'s` : "this person's"
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: ANALYSIS_MODEL,
     max_tokens: 900,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages: [{
