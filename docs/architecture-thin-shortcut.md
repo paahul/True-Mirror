@@ -1,6 +1,33 @@
 # Architecture decision: thin Shortcut vs fat Shortcut
 
-**Raised by Paahul, 2026-06-01.** Open — decide before doing the metric enrichment.
+**Raised by Paahul, 2026-06-01. RESOLVED 2026-06-01 → stay FAT (aggregate in the Shortcut).**
+
+## ✅ Resolution (do not reopen without re-testing)
+
+We ran the validation test below. **The "thin / ultra-thin" approach is not viable**, so
+we're staying with the **fat Shortcut** (Calculate Statistics → numbers, the proven MVP
+path). Proceed with `shortcut-enrichment-build.md`; daily arrays use the Group-by-Day loop
+in the Shortcut. **No backend ingest/transform layer needed.** The `/api/debug-echo` endpoint
+used for the test has been deleted.
+
+**Test result (the deciding evidence):** a 3-action Shortcut —
+`Find Health Samples (HRV, 7 days)` → POST the raw result as a File body → echo — produced:
+
+```json
+{ "received_content_type": "text/plain", "byte_size": 2, "raw_preview": "79",
+  "parsed_as_json": true, "shape": { "type": "number", "value": 79 } }
+```
+
+iOS **collapsed the entire sample list into a single scalar** (`79` — the sample count or
+one value), sent as `text/plain`. It does **not** serialize the per-sample `{date, value}`
+data for free. So the thin dream — "POST raw, let the server do everything, no loops" — is
+dead: any structured data requires explicit shaping in the Shortcut (Calculate Statistics, or
+a Repeat loop). Since loops are unavoidable either way, thin's whole advantage evaporates,
+while fat is already working. Decision: **fat.**
+
+---
+
+_Original analysis (kept for the record):_
 
 ## The observation
 
@@ -68,8 +95,8 @@ when POSTing:
   derived `HealthPayload` (privacy-friendlier). Recommendation: store the **derived**
   payload, not raw samples, to keep history low-sensitivity.
 
-## Recommendation
+## Recommendation — superseded by the Resolution at the top
 
-Lean **yes** to the thin Shortcut — but run the validation test first to size how thin it
-can be. If viable, it replaces most of `shortcut-enrichment-build.md` with a much simpler
-Shortcut and a clean backend transform. Keep the current MVP working in the meantime.
+(Original lean was "yes, pending the test." The test came back negative — iOS won't
+serialize sample arrays — so the final decision is **fat**. See the Resolution section at
+the top of this file.)

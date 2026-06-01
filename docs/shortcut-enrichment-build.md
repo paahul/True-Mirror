@@ -7,22 +7,12 @@ plus per-day arrays.
 **Status when starting this:** MVP works — steps, resting HR, active energy,
 exercise (averages) → POST → analysis. This guide adds everything else.
 
-> 🟡 **DECIDE THIS FIRST (open architecture question, raised 2026-06-01):**
-> We currently aggregate everything *inside* the Shortcut (averages, ÷30, rounding,
-> per-day loops). The original rationale was "send fewer health items." But iOS taints
-> all health-derived data and prompts to send it regardless — so we did **not** actually
-> gain a permission/privacy benefit from client-side aggregation.
->
-> The alternative — **"thin Shortcut, fat backend"** — sends lightly-shaped raw samples
-> and does all averaging / rounding / daily-grouping / sleep-stage math **server-side**
-> (testable code, my strength) instead of fragile untested Shortcut actions. This would
-> **eliminate** most of the patterns below (especially Pattern D daily-array loops and
-> sleep-stage math). Trade-offs: bigger payload, more sensitive raw data stored at rest,
-> a backend ingest/transform layer to build.
->
-> **Before following this guide, do the quick on-device test in
-> `architecture-thin-shortcut.md` to see what format raw samples POST in.** If raw
-> ingest is viable, much of this guide gets replaced by a far simpler Shortcut.
+> ✅ **Architecture decided (2026-06-01): this is the active path.**
+> We considered a "thin Shortcut, fat backend" alternative (POST raw samples, aggregate
+> server-side). An on-device test settled it: iOS won't serialize a health-sample list to
+> JSON — it collapses the list to a single scalar — so raw ingest isn't viable and loops are
+> unavoidable either way. Staying **fat** (aggregate in the Shortcut). Full reasoning in
+> `architecture-thin-shortcut.md`. **Follow this guide as written.**
 
 > ⚠️ Honesty note: I can't test Shortcuts on a device, so HealthKit action labels
 > and a few parameters may differ slightly on your iOS version. Where I'm unsure,

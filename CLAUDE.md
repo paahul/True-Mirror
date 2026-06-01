@@ -23,16 +23,17 @@ energy / exercise (averages) → builds JSON in a Text action → POSTs as a **F
 `/api/analyze?token=…` → shows Claude's analysis → saves to history. Paahul's own token:
 `3083b194-a2ab-4035-ac41-6af4a3985e55` (user "Paahul", performance mode).
 
+**Architecture decided (2026-06-01): FAT Shortcut.** An on-device test showed iOS won't
+serialize a health-sample list to JSON (it collapses to a single scalar), so the "thin
+Shortcut" idea is dead — aggregate in the Shortcut. See `docs/architecture-thin-shortcut.md`
+and `docs/learnings.md`.
+
 **What to do next (in order):**
-1. 🟡 **DECIDE: thin Shortcut vs fat Shortcut** — see `docs/architecture-thin-shortcut.md`.
-   Client-side aggregation gave NO permission/privacy benefit (iOS gates health-derived data
-   regardless), so sending lightly-shaped raw samples + aggregating server-side may be far
-   simpler. Run the on-device serialization test there before enriching.
-2. **Enrich metrics** — `docs/shortcut-enrichment-build.md` (HRV + sleep first → unlock
-   Recovery/Sleep scores; then daily arrays → trends). Skip/replace if thin-Shortcut wins.
-3. **Onboard first friend manually** — `docs/friend-install-guide.md` (no registration flow yet).
-4. **Registration flow** (deferred) — `docs/shortcut-registration-build.md`.
-5. **UI tuning**, then **email** (Resend in cron route).
+1. **Enrich metrics** — `docs/shortcut-enrichment-build.md` (HRV + sleep first → unlock
+   Recovery/Sleep scores; then daily arrays via the Group-by-Day loop → trends).
+2. **Onboard first friend manually** — `docs/friend-install-guide.md` (no registration flow yet).
+3. **Registration flow** (deferred) — `docs/shortcut-registration-build.md`.
+4. **UI tuning**, then **email** (Resend in cron route).
 
 See `plan.md` "Milestones" for the full ordering.
 
@@ -88,9 +89,6 @@ docs/learnings.md                   Running log of insights/decisions + who caug
 
 ## Things not yet decided
 
-- **Thin vs fat Shortcut** (NEW, 2026-06-01): aggregate in the Shortcut (current) vs send
-  raw samples + aggregate server-side. Client-side aggregation gained no permission/privacy
-  benefit. See `docs/architecture-thin-shortcut.md`. **Decide before enriching metrics.**
 - **UX format**: scores vs narrative vs combination — hold until first real users
 - **Verdict line**: one-line status at top of analysis — considered but not implemented, may be too athlete-centric for general persona
 - **Rate limiting**: one analysis per user per day?

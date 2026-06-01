@@ -10,9 +10,10 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
 
 1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end
 2. ⏳ **iOS Shortcut (full metric capture, manual token)** — MVP works on Paahul's
-   iPhone (steps/RHR/energy/exercise → analysis). Now: capture all metrics. **No
-   registration flow yet.** 🟡 Open architecture decision first — see
-   `docs/architecture-thin-shortcut.md` (thin Shortcut + server-side aggregation).
+   iPhone (steps/RHR/energy/exercise → analysis). Now: capture all metrics via
+   `docs/shortcut-enrichment-build.md`. **No registration flow yet.** Architecture decided
+   2026-06-01 → **fat Shortcut** (iOS won't serialize raw sample arrays; see
+   `docs/architecture-thin-shortcut.md`).
 3. ✅ **History UI** — `/history` page with trend charts + toggles
 4. ⏳ **Onboard first friend (manual)** — provision one friend by hand (create user,
    hardcode token, share signed iCloud link), validate real-world install + permission
@@ -106,10 +107,11 @@ If daily data has gaps (Watch not worn), Claude flags it and coaches on charging
 Claude's analysis, saves to history. Proved the HealthKit→JSON→POST→display pipeline +
 the iOS permission gauntlet (see learnings in `docs/shortcut-mvp-build.md` troubleshooting).
 
-**Next:** full metric capture (`docs/shortcut-enrichment-build.md`) — but first decide the
-thin-Shortcut architecture question (`docs/architecture-thin-shortcut.md`). The registration
-flow below is **deferred**; first friend gets onboarded manually
-(`docs/friend-install-guide.md`).
+**Next:** full metric capture (`docs/shortcut-enrichment-build.md`). Architecture decided
+2026-06-01 → **fat Shortcut** (an on-device test showed iOS collapses a raw health-sample
+list to a single scalar, so server-side raw ingest isn't viable; see
+`docs/architecture-thin-shortcut.md`). The registration flow below is **deferred**; first
+friend gets onboarded manually (`docs/friend-install-guide.md`).
 
 Key on-device learnings (2026-06-01): action labels differ slightly ("Steps", "Exercise
 Minutes"); each numbered step is a separate stacked action; Request Body must be **File**

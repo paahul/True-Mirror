@@ -31,6 +31,27 @@ it proactively next time.
 
 ---
 
+## 2026-06-01 — iOS Shortcuts won't serialize a health-sample list to JSON
+**Caught by:** a validation test (Paahul ran it on-device), built to resolve the thin-vs-fat question.
+
+**The test:** a 3-action Shortcut — `Find Health Samples (HRV, 7 days)` → POST the raw result
+as a File body → echo it via a temporary `/api/debug-echo`. The server received
+`text/plain`, 2 bytes, body `"79"` — iOS had **collapsed the entire sample list into a single
+scalar** (the count or one value), not the per-sample `{date, value}` data.
+
+**Why it matters:** it killed the "thin Shortcut" idea. The whole appeal was *"POST raw
+samples, let the server aggregate, no loops in the Shortcut."* But Shortcuts won't hand over a
+structured array for free — you must shape data explicitly (Calculate Statistics → a number,
+or a Repeat loop → a list). Since loops are unavoidable either way, thin's advantage vanished.
+
+**Decision:** stay **fat** (aggregate in the Shortcut, the proven MVP path); daily arrays use
+the in-Shortcut Group-by-Day loop; no backend ingest layer. Details in
+`architecture-thin-shortcut.md`. Debug endpoint deleted after the test.
+
+**Meta-lesson:** a 10-minute on-device probe settled an architecture question that could've
+become a large speculative rewrite. When the unknown is "what does this opaque platform
+actually do," test the smallest real version before designing around an assumption.
+
 <!-- Add new entries above this line, newest first. Format:
 ## YYYY-MM-DD — short title
 **Caught by:** who
