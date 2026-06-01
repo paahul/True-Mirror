@@ -6,6 +6,18 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
 
 ---
 
+## Milestones (current priority order)
+
+1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end
+2. ⏳ **iOS Shortcut** — HealthKit → JSON → POST → show analysis (THIS IS NEXT)
+3. ✅ **History UI** — `/history` page with trend charts + toggles
+4. ⏳ **UI tuning** — polish the report page + history page once there's real usage (lots to refine; deferred on purpose)
+5. ⏳ **Email reminders** — wire up Resend for charge/wear nudges (needs Vercel Pro for hourly cron)
+
+(The "Phase" sections below predate this ordering; phases map roughly to milestones but UI tuning was split out as its own milestone on 2026-05-31.)
+
+---
+
 ## Stack
 
 - **Next.js on Vercel** — API routes + history UI + shareable report pages
