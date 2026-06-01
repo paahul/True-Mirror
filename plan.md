@@ -141,6 +141,7 @@ Wire up Resend:
 - Uncomment `sendEmail()` in `/api/cron/nudge/route.ts`
 - Add weekly summary email (separate cron or same route)
 - Add `CRON_SECRET` to Vercel env (Vercel sets this automatically for cron auth)
+- **Cron schedule**: currently `0 13 * * *` (daily) in `vercel.json` because the Hobby plan caps crons at once/day. The nudge route matches each user's reminder hour against the current hour, so it needs to run **hourly** (`0 * * * *`) to cover all timezones. Revert to hourly once on Vercel Pro — required for the reminder feature to actually work per-timezone.
 
 ---
 
