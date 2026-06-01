@@ -41,12 +41,16 @@ CRON_SECRET                Vercel sets this automatically
 ```
 app/api/analyze/route.ts      POST /api/analyze?token=...  — main endpoint
 app/api/register/route.ts     POST /api/register           — self-serve signup
-app/api/cron/nudge/route.ts   GET  /api/cron/nudge         — hourly email reminders
+app/api/cron/nudge/route.ts   GET  /api/cron/nudge         — daily email reminders (see plan.md cron note)
+app/api/history/route.ts      GET  /api/history?token=...  — user's reports + scores (recomputed)
+app/api/user/route.ts         PATCH /api/user?token=...    — update mode + opt_in
 app/report/[id]/page.tsx      Public shareable report page
+app/history/page.tsx          History page shell (Suspense)
+app/history/HistoryClient.tsx History UI: charts, chips, toggles (client)
 lib/claude.ts                 Health summary + Claude call
 lib/scores.ts                 Recovery/sleep/strain/stress score algorithms
 lib/supabase.ts               DB helpers
-lib/types.ts                  All TypeScript types
+lib/types.ts                  All TypeScript types (incl. HealthScores — single source)
 supabase/migrations/001_initial.sql  Run this in Supabase SQL editor
 fixtures/health-data.json     30-day test payload with declining health pattern
 docs/shortcut-payload.md      Full iOS Shortcut build spec
@@ -58,7 +62,7 @@ docs/shortcut-payload.md      Full iOS Shortcut build spec
 - **Self-serve registration**: Shortcut asks name/email/mode on first run, stores token in iCloud Drive
 - **Invite code gate**: one code per group, hardcoded in Shortcut before sharing
 - **Three user modes**: curious (default), active, performance — changes Claude prompt (per-mode prompts not yet written)
-- **Scores computed server-side**: Sleep/Recovery/Strain/Stress passed to Claude as context, not shown directly to user yet
+- **Scores computed server-side**: Sleep/Recovery/Strain/Stress passed to Claude as context; also shown to the user as chips + trend charts on the history page (recomputed from raw_data on read — not persisted)
 - **Shareable reports**: `/report/[id]` is the referral loop — "Get True Mirror" CTA at the bottom
 - **Notifications**: Vercel Cron (hourly) + email via Resend; user sets charge_reminder and wear_reminder times at registration with their timezone
 
@@ -72,9 +76,14 @@ docs/shortcut-payload.md      Full iOS Shortcut build spec
 
 - Per-mode Claude prompts (currently one general prompt)
 - Data gap detection (detect Watch not worn, coach on charging habit)
-- History UI (`/history?token=...`) with score trend charts
 - Email (wire up Resend in cron route)
-- History page mode/opt-in toggles
+- **iOS Shortcut** (Phase 2) — the next focus; nothing feeds the backend without it
+
+## Done (Phase 3, 2026-05-31)
+
+- ✅ History UI (`/history?token=...`) with score trend charts (Recovery/Sleep), report list, score chips, expandable analysis, share links
+- ✅ History page mode toggle + opt-in/opt-out toggle (via `PATCH /api/user`)
+- Note: scores are **not stored** — `GET /api/history` recomputes them from each report's `raw_data` via `computeScores()`
 
 ## Testing without a Shortcut
 
