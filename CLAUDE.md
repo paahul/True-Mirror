@@ -16,11 +16,25 @@ Deployment details:
 - **DNS**: `truemirror.paahulhq.com` → `A 76.76.21.21` in Cloudflare, **DNS only (grey cloud)** — must stay grey or Vercel SSL breaks (525).
 - **Cron**: on Hobby plan, capped at daily — currently `0 13 * * *`. Revert to hourly (`0 * * * *`) when on Pro + email is wired (see plan.md Phase 4).
 
-## What to do next (in order)
+## iOS Shortcut status (Milestone 2 — in progress)
 
-1. **Build the iOS Shortcut** — see `docs/shortcut-payload.md` for the full spec. This is the next focus.
-2. **Test on iPhone** against real Health data, iterate on the Claude prompt.
-3. **Wire up email** — install Resend, uncomment `sendEmail()` in `app/api/cron/nudge/route.ts`, add `RESEND_API_KEY` to Vercel.
+**MVP Shortcut works on Paahul's iPhone (2026-06-01).** Reads steps / resting HR / active
+energy / exercise (averages) → builds JSON in a Text action → POSTs as a **File** body to
+`/api/analyze?token=…` → shows Claude's analysis → saves to history. Paahul's own token:
+`3083b194-a2ab-4035-ac41-6af4a3985e55` (user "Paahul", performance mode).
+
+**What to do next (in order):**
+1. 🟡 **DECIDE: thin Shortcut vs fat Shortcut** — see `docs/architecture-thin-shortcut.md`.
+   Client-side aggregation gave NO permission/privacy benefit (iOS gates health-derived data
+   regardless), so sending lightly-shaped raw samples + aggregating server-side may be far
+   simpler. Run the on-device serialization test there before enriching.
+2. **Enrich metrics** — `docs/shortcut-enrichment-build.md` (HRV + sleep first → unlock
+   Recovery/Sleep scores; then daily arrays → trends). Skip/replace if thin-Shortcut wins.
+3. **Onboard first friend manually** — `docs/friend-install-guide.md` (no registration flow yet).
+4. **Registration flow** (deferred) — `docs/shortcut-registration-build.md`.
+5. **UI tuning**, then **email** (Resend in cron route).
+
+See `plan.md` "Milestones" for the full ordering.
 
 Smoke-test recipe (no Shortcut needed): insert a user via Supabase SQL editor (`INSERT INTO users (name) VALUES ('Test') RETURNING token;`), then `curl -X POST "https://truemirror.paahulhq.com/api/analyze?token=TOKEN" -H "Content-Type: application/json" -d @fixtures/health-data.json`. Note the fixture has `save_history:false` (stateless); set it true to test the report-save path.
 
@@ -53,7 +67,12 @@ lib/supabase.ts               DB helpers
 lib/types.ts                  All TypeScript types (incl. HealthScores — single source)
 supabase/migrations/001_initial.sql  Run this in Supabase SQL editor
 fixtures/health-data.json     30-day test payload with declining health pattern
-docs/shortcut-payload.md      Full iOS Shortcut build spec
+docs/shortcut-payload.md            Full iOS Shortcut payload contract (spec)
+docs/shortcut-mvp-build.md          MVP Shortcut build steps (DONE — works on-device)
+docs/shortcut-enrichment-build.md   Full metric capture + daily-array pattern
+docs/architecture-thin-shortcut.md  Open decision: thin Shortcut + server-side aggregation
+docs/friend-install-guide.md        Manual onboarding + permission walkthrough for friends
+docs/shortcut-registration-build.md Deferred: self-serve first-run registration flow
 ```
 
 ## Architecture decisions made
@@ -68,16 +87,22 @@ docs/shortcut-payload.md      Full iOS Shortcut build spec
 
 ## Things not yet decided
 
+- **Thin vs fat Shortcut** (NEW, 2026-06-01): aggregate in the Shortcut (current) vs send
+  raw samples + aggregate server-side. Client-side aggregation gained no permission/privacy
+  benefit. See `docs/architecture-thin-shortcut.md`. **Decide before enriching metrics.**
 - **UX format**: scores vs narrative vs combination — hold until first real users
 - **Verdict line**: one-line status at top of analysis — considered but not implemented, may be too athlete-centric for general persona
 - **Rate limiting**: one analysis per user per day?
 
 ## Things still to build
 
+- **iOS Shortcut: full metric capture** (MVP done; enrich next — pending thin/fat decision)
+- **Onboard first friend manually** (then build registration flow)
+- Registration flow (self-serve first-run) — deferred
 - Per-mode Claude prompts (currently one general prompt)
 - Data gap detection (detect Watch not worn, coach on charging habit)
+- UI tuning (report + history pages) — deferred until real usage
 - Email (wire up Resend in cron route)
-- **iOS Shortcut** (Phase 2) — the next focus; nothing feeds the backend without it
 
 ## Done (Phase 3, 2026-05-31)
 

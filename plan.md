@@ -9,12 +9,23 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
 ## Milestones (current priority order)
 
 1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end
-2. ⏳ **iOS Shortcut** — HealthKit → JSON → POST → show analysis (THIS IS NEXT)
+2. ⏳ **iOS Shortcut (full metric capture, manual token)** — MVP works on Paahul's
+   iPhone (steps/RHR/energy/exercise → analysis). Now: capture all metrics. **No
+   registration flow yet.** 🟡 Open architecture decision first — see
+   `docs/architecture-thin-shortcut.md` (thin Shortcut + server-side aggregation).
 3. ✅ **History UI** — `/history` page with trend charts + toggles
-4. ⏳ **UI tuning** — polish the report page + history page once there's real usage (lots to refine; deferred on purpose)
-5. ⏳ **Email reminders** — wire up Resend for charge/wear nudges (needs Vercel Pro for hourly cron)
+4. ⏳ **Onboard first friend (manual)** — provision one friend by hand (create user,
+   hardcode token, share signed iCloud link), validate real-world install + permission
+   friction + whether the analysis lands. See `docs/friend-install-guide.md`.
+5. ⏳ **Registration flow** — self-serve first-run (name/email/mode → token), one
+   shareable link, no per-person DB work. See `docs/shortcut-registration-build.md`.
+6. ⏳ **UI tuning** — polish report + history pages once there's real usage (deferred on purpose).
+7. ⏳ **Email reminders** — wire up Resend for charge/wear nudges (needs Vercel Pro for hourly cron).
 
-(The "Phase" sections below predate this ordering; phases map roughly to milestones but UI tuning was split out as its own milestone on 2026-05-31.)
+Build docs: `shortcut-mvp-build.md` (done) · `shortcut-enrichment-build.md` ·
+`shortcut-registration-build.md` · `friend-install-guide.md` · `architecture-thin-shortcut.md`.
+
+(The "Phase" sections below predate this ordering and map roughly to these milestones.)
 
 ---
 
@@ -88,9 +99,24 @@ If daily data has gaps (Watch not worn), Claude flags it and coaches on charging
 
 ---
 
-## Phase 2 — iOS Shortcut ⏳
+## Phase 2 — iOS Shortcut 🟡 (MVP working on-device 2026-06-01)
 
-### Registration flow (first run only)
+**Done:** MVP Shortcut built on Paahul's iPhone — reads steps/RHR/active energy/exercise
+(averages), builds JSON via a Text action, POSTs as a File body to `/api/analyze`, shows
+Claude's analysis, saves to history. Proved the HealthKit→JSON→POST→display pipeline +
+the iOS permission gauntlet (see learnings in `docs/shortcut-mvp-build.md` troubleshooting).
+
+**Next:** full metric capture (`docs/shortcut-enrichment-build.md`) — but first decide the
+thin-Shortcut architecture question (`docs/architecture-thin-shortcut.md`). The registration
+flow below is **deferred**; first friend gets onboarded manually
+(`docs/friend-install-guide.md`).
+
+Key on-device learnings (2026-06-01): action labels differ slightly ("Steps", "Exercise
+Minutes"); each numbered step is a separate stacked action; Request Body must be **File**
+with the Text feeding in; iOS needs **Allow Sharing Large Amounts of Data** + **Always
+Allow** sending health data to the domain; smart-quotes and empty variables both break JSON.
+
+### Registration flow (first run only) — DEFERRED, see shortcut-registration-build.md
 1. Try to read token from iCloud Drive (`/Shortcuts/TrueMirror/token.txt`)
 2. If missing:
    - Ask "What's your name?"
@@ -171,14 +197,16 @@ Wire up Resend:
 ## Build order
 
 1. ✅ Full backend (schema, register, analyze, scores, report page, cron stub)
-2. ⏳ **Deploy**: Supabase project → run migration → Vercel deploy → set env vars → DNS
+2. ✅ **Deploy**: Supabase project → migration → Vercel deploy → env vars → DNS (live at truemirror.paahulhq.com)
 3. ✅ **Smoke test**: `curl -X POST https://truemirror.paahulhq.com/api/analyze?token=... -d @fixtures/health-data.json`
-4. ⏳ **Build Shortcut**: registration flow + analysis flow + share action
-5. ⏳ **Test on iPhone**: run against real Health data, iterate on prompt
-6. ⏳ **Wire email**: add Resend, test charge/wear reminders
+4. 🟡 **Build Shortcut**: MVP (4 metrics) working on-device; full capture + analysis/share flow pending
+5. 🟡 **Test on iPhone**: MVP run succeeded end-to-end; iterate on prompt as metrics are added
+6. ⏳ **Onboard first friend (manual)** — validate real-world install + permissions
 7. ✅ **Build history UI**
-8. ⏳ **Per-mode prompts**
-9. ⏳ **Data gap detection in prompt**
+8. ⏳ **Registration flow** (deferred until after first friend)
+9. ⏳ **Wire email**: add Resend, test charge/wear reminders
+10. ⏳ **Per-mode prompts**
+11. ⏳ **Data gap detection in prompt**
 
 ---
 
