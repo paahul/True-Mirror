@@ -50,6 +50,16 @@ Most health apps are relentlessly positive. Streaks, badges, congratulations for
 - Claude API — analysis and suggestions
 - iOS Shortcuts — HealthKit data pipeline, shareable via link
 
+## The Watch charging problem
+
+There's a second, adjacent problem that True Mirror is positioned to help with: many people who own an Apple Watch don't wear it consistently because of the charging cycle. They want to wear it, but they take it off to charge, forget to put it back on, and slowly the habit breaks. Without consistent wearing, health data gets patchy — and patchy data means worse analysis.
+
+No existing app addresses this because no app has a reason to. True Mirror does. Our value goes up the more consistently someone wears their Watch, so helping users build a reliable charging routine is directly in our interest.
+
+The approach: detect data gaps (missing days in the 30-day window mean the Watch wasn't worn), surface this in the analysis, and offer opt-in reminders at times the user chooses — a charge reminder in the evening, a wear reminder in the morning. We can't access Watch battery level directly, but we don't need to. Scheduled prompting builds the routine just as effectively, and the user choosing their own reminder time means they're opting into a habit change, not just receiving a push notification.
+
+This is a small feature in terms of implementation but meaningful in terms of user value — and it aligns our incentives cleanly with the user's.
+
 ## Who it's for (v1)
 
 Friends and family. Not the App Store. The distribution model is a Shortcut link and a Vercel URL. At this scale, AI costs are negligible. The opt-in history feature means users who want to track trends over time can, and users who want privacy-first stateless analysis can do that too.
