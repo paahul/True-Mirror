@@ -1,11 +1,17 @@
 -- users: self-serve registration via Shortcut, gated by invite code
 create table users (
-  id         uuid primary key default gen_random_uuid(),
-  name       text not null,
-  token      text unique not null default gen_random_uuid()::text,
-  email      text,
-  opt_in     boolean not null default true,
-  created_at timestamptz not null default now()
+  id                 uuid primary key default gen_random_uuid(),
+  name               text not null,
+  token              text unique not null default gen_random_uuid()::text,
+  email              text,
+  mode               text not null default 'curious', -- curious | active | performance
+  opt_in             boolean not null default true,
+  timezone           text,                            -- e.g. America/New_York
+  charge_reminder    boolean not null default false,
+  charge_reminder_at time,                            -- local time, e.g. 21:00
+  wear_reminder      boolean not null default false,
+  wear_reminder_at   time,                            -- local time, e.g. 07:00
+  created_at         timestamptz not null default now()
 );
 
 -- one row per analysis run

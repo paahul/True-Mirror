@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUser } from '@/lib/supabase'
-import type { RegisterRequest } from '@/lib/types'
+import type { RegisterRequest, UserMode } from '@/lib/types'
+
+const VALID_MODES: UserMode[] = ['curious', 'active', 'performance']
 
 export async function POST(req: NextRequest) {
   let body: RegisterRequest
@@ -20,8 +22,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid invite code' }, { status: 403 })
   }
 
+  const mode = body.mode && VALID_MODES.includes(body.mode) ? body.mode : 'curious'
+
   try {
-    const user = await createUser(body.name.trim(), body.email?.trim())
+    const user = await createUser({
+      name: body.name.trim(),
+      email: body.email?.trim(),
+      mode,
+      timezone: body.timezone,
+      charge_reminder: body.charge_reminder,
+      charge_reminder_at: body.charge_reminder_at,
+      wear_reminder: body.wear_reminder,
+      wear_reminder_at: body.wear_reminder_at,
+    })
     return NextResponse.json({ token: user.token })
   } catch (err) {
     console.error('Register error:', err)

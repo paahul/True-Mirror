@@ -1,3 +1,5 @@
+export type UserMode = 'curious' | 'active' | 'performance'
+
 export interface DailySteps {
   date: string
   count: number
@@ -120,6 +122,12 @@ export interface RegisterRequest {
   name: string
   email?: string
   invite_code?: string
+  mode?: UserMode
+  timezone?: string
+  charge_reminder?: boolean
+  charge_reminder_at?: string  // "HH:MM" local time
+  wear_reminder?: boolean
+  wear_reminder_at?: string    // "HH:MM" local time
 }
 
 export interface RegisterResponse {
