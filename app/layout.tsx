@@ -12,12 +12,14 @@ export const metadata: Metadata = {
     url: 'https://truemirror.paahulhq.com',
     siteName: 'True Mirror',
     type: 'website',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'True Mirror — your health data, reflected honestly' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'True Mirror — Your health data, reflected honestly',
     description:
       'Apple Health × Claude. A direct read on your last 30 days, in ~10 seconds. No App Store, no export, no login.',
+    images: ['/og.png'],
   },
 }
 
