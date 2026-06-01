@@ -121,15 +121,18 @@ Sleep stages are the hardest part — iOS stores them as overlapping intervals. 
 
 ---
 
-## Phase 3 — History UI ⏳
+## Phase 3 — History UI ✅ (deployed 2026-05-31)
 
-Page at `/history?token=[token]`:
-- Reports newest first with date + score summary per report
-- Score trend charts (Recovery, Sleep over time) — this is where scores shine
-- Full analysis on tap
-- Share button per report
-- Mode toggle
-- Opt-out toggle
+Page at `/history?token=[token]` — client component, fetches `GET /api/history?token=`:
+- ✅ Reports newest first with date + score chips (Recovery/Sleep/Strain/Stress)
+- ✅ Score trend charts (Recovery, Sleep over time) — dependency-free inline SVG, fixed 0–100 scale
+- ✅ Full analysis expandable on tap (reuses the report page's bold-header renderer)
+- ✅ Share per report (Open ↗ link + Copy link)
+- ✅ Mode toggle and opt-out toggle → `PATCH /api/user?token=` (optimistic update)
+
+Scores are **not persisted** — `GET /api/history` recomputes them from each report's stored `raw_data` via `computeScores()`. `HealthScores` type moved to `lib/types.ts` (single source) to avoid a circular import.
+
+New files: `app/history/page.tsx`, `app/history/HistoryClient.tsx`, `app/api/history/route.ts`, `app/api/user/route.ts`. New supabase helpers: `getReportsByUser`, `updateUser`.
 
 ---
 
@@ -157,11 +160,11 @@ Wire up Resend:
 
 1. ✅ Full backend (schema, register, analyze, scores, report page, cron stub)
 2. ⏳ **Deploy**: Supabase project → run migration → Vercel deploy → set env vars → DNS
-3. ⏳ **Smoke test**: `curl -X POST https://truemirror.paahulhq.com/api/analyze?token=... -d @fixtures/health-data.json`
+3. ✅ **Smoke test**: `curl -X POST https://truemirror.paahulhq.com/api/analyze?token=... -d @fixtures/health-data.json`
 4. ⏳ **Build Shortcut**: registration flow + analysis flow + share action
 5. ⏳ **Test on iPhone**: run against real Health data, iterate on prompt
 6. ⏳ **Wire email**: add Resend, test charge/wear reminders
-7. ⏳ **Build history UI**
+7. ✅ **Build history UI**
 8. ⏳ **Per-mode prompts**
 9. ⏳ **Data gap detection in prompt**
 
