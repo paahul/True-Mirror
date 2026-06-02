@@ -7,17 +7,32 @@ export const metadata: Metadata = {
   description: 'A personal health analysis from True Mirror.',
 }
 
+const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
+const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+const INK = '#1a1a18'
+const MUTED = '#6f6b62'
+const ACCENT = '#1f6f63'
+const CARD = '#fffdf9'
+const BORDER = '#e7e2d8'
+
 function renderAnalysis(text: string) {
-  return text.split('\n').filter(Boolean).map((line, i) => {
-    const parts = line.split(/\*\*(.*?)\*\*/)
-    const content = parts.map((part, j) =>
-      j % 2 === 1 ? <strong key={j}>{part}</strong> : part,
-    )
-    const isHeader = line.startsWith('**') && parts.length >= 2
-    return isHeader
-      ? <h2 key={i} style={{ fontSize: 17, marginTop: 28, marginBottom: 6 }}>{parts[1]}</h2>
-      : <p key={i} style={{ margin: '6px 0', lineHeight: 1.6 }}>{content}</p>
-  })
+  return text
+    .split('\n')
+    .filter(Boolean)
+    .map((line, i) => {
+      const parts = line.split(/\*\*(.*?)\*\*/)
+      const content = parts.map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))
+      const isHeader = line.startsWith('**') && parts.length >= 2
+      return isHeader ? (
+        <h2 key={i} style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 600, color: ACCENT, margin: '24px 0 6px' }}>
+          {parts[1]}
+        </h2>
+      ) : (
+        <p key={i} style={{ margin: '8px 0', lineHeight: 1.65, fontSize: 15.5, color: '#3a3a36' }}>
+          {content}
+        </p>
+      )
+    })
 }
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,38 +47,50 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   })
 
   return (
-    <main style={{
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      maxWidth: 560,
-      margin: '0 auto',
-      padding: '40px 24px 80px',
-      color: '#111',
-    }}>
-      <p style={{ fontSize: 13, color: '#888', marginBottom: 24, marginTop: 0 }}>
-        True Mirror · {date}
-      </p>
+    <main style={{ fontFamily: SANS, maxWidth: 600, margin: '0 auto', padding: '44px 24px 80px', color: INK }}>
+      <style>{`@keyframes tmFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }`}</style>
 
-      <div>{renderAnalysis(report.analysis)}</div>
+      <div style={{ animation: 'tmFadeUp .5s ease both' }}>
+        <p style={{ fontSize: 13, color: MUTED, margin: '0 0 4px' }}>True Mirror</p>
+        <p style={{ fontFamily: SERIF, fontSize: 15, color: MUTED, margin: '0 0 20px' }}>{date}</p>
+      </div>
 
-      <div style={{
-        marginTop: 48,
-        paddingTop: 24,
-        borderTop: '1px solid #eee',
-        fontSize: 14,
-        color: '#555',
-      }}>
-        <p style={{ margin: '0 0 12px' }}>Want an analysis of your own health data?</p>
+      <article
+        style={{
+          background: CARD,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 16,
+          padding: '24px 24px 26px',
+          animation: 'tmFadeUp .5s ease both',
+          animationDelay: '.06s',
+        }}
+      >
+        {renderAnalysis(report.analysis)}
+      </article>
+
+      <div
+        style={{
+          marginTop: 36,
+          paddingTop: 24,
+          borderTop: `1px solid ${BORDER}`,
+          fontSize: 15,
+          color: MUTED,
+          animation: 'tmFadeUp .5s ease both',
+          animationDelay: '.12s',
+        }}
+      >
+        <p style={{ margin: '0 0 14px' }}>Want an honest read on your own Apple Health data?</p>
         <a
           href="https://truemirror.paahulhq.com"
           style={{
             display: 'inline-block',
-            background: '#111',
+            background: ACCENT,
             color: '#fff',
-            padding: '10px 20px',
-            borderRadius: 8,
+            padding: '12px 24px',
+            borderRadius: 10,
             textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 600,
           }}
         >
           Get True Mirror →
