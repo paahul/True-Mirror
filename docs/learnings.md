@@ -117,6 +117,27 @@ not needed for VO2/Weight (Limit 1). Build guides updated.
 enough to trip it. Same theme as the missing-metric gap: test against the *range* of real
 users, not just your own device.
 
+## 2026-06-02 — Steps/energy double-count for Apple Watch wearers (multi-source)
+**Caught by:** Abhishek (noticed his steps were ~2× reality), via Paahul.
+
+**Cause:** iPhone *and* Apple Watch each record steps/active-energy/exercise. The Health app
+deduplicates by source priority, but our `Find Health Samples → Sum` adds samples from **all
+sources** → ~2× for Watch wearers. Single-source (phone-only) users are unaffected.
+
+**Fix:** add a **Source filter** to the Steps / Active Energy / Exercise Find actions to keep
+one source (the Watch, for wearers). Confirmed it fixes the count.
+
+**The snag for distribution:** the Source filter stores a *specific device*, so it does NOT
+travel in a shared shortcut copy (each phone's devices are named differently) — every
+Watch-wearer has to set their own source once. Phone-only users need no filter (and filtering
+to "Watch" would zero their steps). So it's a one-time per-Watch-user tweak; fine for the
+manual model, but the **registration-flow/future version needs a cleaner answer** (a first-run
+"which device do you wear?" step, or instruct Claude to treat absolute step counts as
+approximate and lean on trends).
+
+**Meta-lesson (again):** the builder's own device hid it — need to test across device setups
+(Watch vs phone-only, sparse vs dense), not just one phone. Third time this theme has appeared.
+
 <!-- Add new entries above this line, newest first. Format:
 ## YYYY-MM-DD — short title
 **Caught by:** who

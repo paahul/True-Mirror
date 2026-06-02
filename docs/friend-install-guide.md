@@ -54,6 +54,14 @@ Keep their token handy.
 
 **If anything fails:** "large amounts of data" error → you skipped step 1, flip it and re-run.
 Missing data in the analysis → you tapped a toggle off; re-run and **Turn On All**.
+"There was a problem running" at the send step → on first run, tap **Always Allow** on the
+"send health data to truemirror.paahulhq.com" prompt (if you tapped Don't Allow, delete the
+shortcut, re-add from the link, and Always Allow this time).
+
+**⌚ If you wear an Apple Watch — one-time fix for inflated steps:** iPhone + Watch both count
+steps/energy, so the totals can read ~2× too high. In the shortcut, open the **Steps**,
+**Active Energy**, and **Exercise** `Find Health Samples` actions → **Add Filter → Source →
+your Apple Watch**. (Phone-only users: skip this — your numbers are already correct.)
 
 **Your page is your home:** the Shortcut opens `truemirror.paahulhq.com/history?token=…`
 (your private link) — add it to your Home Screen to revisit anytime; it shows trends as you
