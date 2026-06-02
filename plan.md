@@ -30,7 +30,11 @@ Authoritative guide: `docs/build-your-own.md`.
    source filter), send-permission gotcha. See `docs/learnings.md`.
 5. ❌ **Registration flow** — **dropped.** Doesn't remove the real friction; manual provisioning
    is fine at personal scale. (`docs/shortcut-registration-build.md` kept for reference only.)
-6. ⏸️ **UI tuning / richer charts — DECISION FORK (deferred).** Abhishek asked for Whoop-style
+6. ✅ **UI polish — Shipped (2026-06-02).** Brand-cohesive redesign across landing, history, and
+   report pages: history hero with a **dark glowing ring-gauge panel** (count-up numbers,
+   Δ-vs-last-run), gradient trend charts, polished report page. Stayed in the "polish what we
+   have" lane — not the Whoop dashboard (that's M7).
+7. ⏸️ **Richer "Whoop-style" charts — DECISION FORK (deferred).** Abhishek asked for Whoop-style
    visuals. Before building, decide the direction — they're genuinely different products:
 
    - **(a) Deepen the narrative** *(on-brand):* capture light **day-over-day** data so Claude's
@@ -48,8 +52,8 @@ Authoritative guide: `docs/build-your-own.md`.
      the per-day capture + loop friction lives in an optional artifact and the **core narrative
      Shortcut stays lean and buildable**. Don't bolt the dashboard onto the main shortcut.
    - Default lean: **(a)** — deepen the narrative; only do **(b)** if there's real pull for it.
-7. ⏸️ **Email reminders** — deferred (Resend + hourly cron → Vercel Pro).
-8. 🔬 **Research: dynamic "pick your wearable" source filter** — prove/disprove. The Watch
+8. ⏸️ **Email reminders** — deferred (Resend + hourly cron → Vercel Pro).
+9. 🔬 **Research: dynamic "pick your wearable" source filter** — prove/disprove. The Watch
    Source filter is device-specific, so it can't be pre-set for someone else's phone (and a
    server-captured device name can't be injected into a `Find Health Samples` filter at
    runtime). The only viable path is on-device: a first-run "pick your wearable" step stored
@@ -70,18 +74,15 @@ Build docs: **`build-your-own.md` (authoritative)** · `shortcut-mvp-build.md` �
 
 Ordered by value × on-brand-ness × effort. All optional; it's a working personal tool today.
 
-1. **History-page polish** (near-term, low-risk, on-brand — the "polish what we have" lane, NOT
-   the M6 dashboard fork): brand cohesion with the landing page (warm paper bg, Newsreader serif,
-   teal accent), a "latest read" hero card with big scores + simple SVG rings, **Δ vs last run**
-   on each score, gradient area-fill + value labels on the trend charts, micro-animations,
-   nicer loading/empty states.
+1. ✅ **History-page polish** — **done 2026-06-02** (M6). Brand cohesion + dark glowing ring hero
+   + Δ-vs-last-run + gradient charts + animations, across history & report pages.
 2. **Add Sleep to the Shortcut** → unlocks the Sleep score (completes the four-score set).
 3. **Per-mode Claude prompts + data-gap detection** (old Phase 1g/1h) — distinct prompts per
    mode; detect Watch-not-worn gaps and coach on charging. Narrative-deepening = the moat.
-4. **Charts fork** (M6) — decide (a) deepen-narrative vs (b) Whoop-style dashboard as a separate
+4. **Charts fork** (M7) — decide (a) deepen-narrative vs (b) Whoop-style dashboard as a separate
    "daily snapshot" Shortcut.
-5. **Dynamic source-filter research** (M8) — the "pick your wearable" feasibility check.
-6. **Email reminders** (M7) — Resend + Vercel Pro.
+5. **Dynamic source-filter research** (M9) — the "pick your wearable" feasibility check.
+6. **Email reminders** (M8) — Resend + Vercel Pro.
 
 (The "Phase" sections below predate this ordering and map roughly to these milestones.)
 

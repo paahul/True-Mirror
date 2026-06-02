@@ -37,15 +37,18 @@ Critical build rules (from real failures, see `docs/learnings.md`):
 - **Apple Watch users: Source filter → their Watch** on Steps/Energy/Exercise — or ~2× double-count.
 - Server (`lib/normalize.ts`) tolerates **any subset** of metrics (no-Watch/no-weight users are fine).
 
+**Done 2026-06-02:** UI polish (M6) — brand-cohesive redesign across landing/history/report;
+history hero = dark glowing ring gauges + count-up + Δ-vs-last-run, gradient trend charts.
+
 **What's next (if/when resumed — currently paused):**
-1. **Charts — DECISION FORK (headline, see plan.md M6):** (a) deepen the narrative with light
-   day-over-day capture (on-brand) vs (b) Whoop-style dashboard (rings/curves — re-opens the
-   per-day Repeat loops). We're free, not competing with paid sensor apps, so the narrative is
-   the moat. If (b), likely a **separate "daily snapshot" Shortcut** to keep the core one lean.
-   Default lean: (a).
-2. **Sleep** metric → unlock the Sleep score.
-3. UI polish, email reminders — deferred.
-4. **Registration flow — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
+1. **Sleep** metric → unlock the Sleep score (completes the four-score set).
+2. **Per-mode prompts + data-gap detection** — narrative-deepening (the moat).
+3. **Charts — DECISION FORK (plan.md M7):** (a) deepen the narrative with light day-over-day
+   capture (on-brand) vs (b) Whoop-style dashboard (rings/curves — re-opens the per-day Repeat
+   loops). We're free, not competing with paid sensor apps, so the narrative is the moat. If (b),
+   likely a **separate "daily snapshot" Shortcut** to keep the core one lean. Default lean: (a).
+4. **Email reminders (M8)** · **dynamic source-filter research (M9)** — deferred.
+5. **Registration flow (M5) — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
 
 See `plan.md` "Milestones" for the full ordering.
 

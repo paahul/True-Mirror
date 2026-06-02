@@ -92,12 +92,15 @@ Loading a report or history page is just a Supabase read — no AI call per view
 | Milestone | What it is | Status |
 |---|---|---|
 | **M1 — Backend** | Schema, analyze/cron routes, server-side scores, shareable report pages — deployed with a custom domain + SSL | ✅ Shipped |
-| **M2 — iOS Shortcut** | HealthKit → JSON → POST → analysis. Full metric capture (steps, RHR, HRV, energy, exercise, VO₂, respiratory, SpO2, weight) → real Recovery/Strain/Stress. Tolerant of any data subset | ✅ Working |
+| **M2 — iOS Shortcut** | HealthKit → JSON → POST → analysis. Full metric capture (steps, RHR, HRV, energy, exercise, VO₂, respiratory, SpO2, weight) → real Recovery/Strain/Stress. Tolerant of any data subset | ✅ Shipped |
 | **M3 — History UI** | `/history`: trend charts, score chips, expandable analyses, mode + opt-out toggles | ✅ Shipped |
-| **M4 — Onboard first friends** | Manual provisioning; validated end-to-end on two real (non-builder) phones, sparse and dense data | ✅ Done |
+| **M4 — Onboard first friends** | Manual provisioning; validated end-to-end on two real (non-builder) phones, sparse and dense data | ✅ Shipped |
 | **M5 — Registration flow** | Self-serve first-run token provisioning | ❌ Dropped — doesn't remove the real (permission/device) friction; manual provisioning is fine at personal scale |
-| **M6 — UI tuning / richer charts** | Whoop-style per-day visuals; needs more granular capture | ⏸️ Deferred |
-| **M7 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏸️ Deferred |
+| **M6 — UI polish** | Brand-cohesive redesign across all surfaces: history hero (dark glowing ring gauges, count-up, Δ-vs-last-run), gradient trend charts, polished report page | ✅ Shipped |
+| **M7 — Richer "Whoop-style" charts** | Per-day dashboard visuals (rings/curves over time) — needs granular per-day capture; likely a separate "daily snapshot" Shortcut | ⏸️ Deferred (decision fork — see `plan.md`) |
+| **M8 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏸️ Deferred |
+
+Status legend: **✅ Shipped** (built + deployed) · **⏸️ Deferred** (intentionally parked) · **❌ Dropped** (won't do).
 
 Scope call (2026-06-02): after validating on real friends, this is a **personal tool**, not a
 broad-distribution product — the iOS Shortcut route trades App Store reach for per-device setup
