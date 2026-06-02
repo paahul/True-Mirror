@@ -32,10 +32,9 @@ function computeRecoveryScore(health: HealthPayload, sleepScore: number | null):
   const hrv = health.hrv_ms
   const hr  = health.heart_rate
 
-  if (!hrv?.daily || hrv.daily.length < 7) return null
+  const recentHrv = recentHrvValue(hrv)
+  if (!hrv?.average || recentHrv == null) return null
 
-  const sorted    = [...hrv.daily].sort((a, b) => a.date.localeCompare(b.date))
-  const recentHrv = mean(sorted.slice(-3).map(d => d.ms))
   const ratio     = recentHrv / hrv.average  // vs 30-day baseline
 
   // ratio 0→1.5 mapped to 0→60 pts
@@ -87,10 +86,9 @@ function computeStressLevel(
   strain: number | null,
 ): 'low' | 'moderate' | 'high' | null {
   const hrv = health.hrv_ms
-  if (!hrv?.daily || hrv.daily.length < 7) return null
+  const recentHrv = recentHrvValue(hrv)
+  if (!hrv?.average || recentHrv == null) return null
 
-  const sorted    = [...hrv.daily].sort((a, b) => a.date.localeCompare(b.date))
-  const recentHrv = mean(sorted.slice(-3).map(d => d.ms))
   const ratio     = recentHrv / hrv.average
 
   if (ratio >= 0.90) return 'low'
@@ -100,4 +98,17 @@ function computeStressLevel(
 
 function mean(values: number[]): number {
   return values.reduce((s, v) => s + v, 0) / values.length
+}
+
+// Recent HRV for the recovery/stress ratio: prefer the last 3 days of a daily
+// array (if we have ≥3), otherwise fall back to a provided `recent` average
+// (e.g. last 7 days from the Shortcut). null if neither is available.
+function recentHrvValue(hrv: HealthPayload['hrv_ms']): number | null {
+  if (!hrv) return null
+  if (hrv.daily && hrv.daily.length >= 3) {
+    const sorted = [...hrv.daily].sort((a, b) => a.date.localeCompare(b.date))
+    return mean(sorted.slice(-3).map(d => d.ms))
+  }
+  if (hrv.recent != null) return hrv.recent
+  return null
 }

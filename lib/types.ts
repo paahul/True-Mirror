@@ -82,7 +82,8 @@ export interface HealthPayload {
     daily_resting?: DailyHeartRate[]
   }
   hrv_ms?: {
-    average: number
+    average: number        // 30-day baseline
+    recent?: number        // recent (e.g. last 7 days) average — drives Recovery/Stress without a daily array
     daily?: DailyHRV[]
   }
   vo2_max_ml_kg_min?: number

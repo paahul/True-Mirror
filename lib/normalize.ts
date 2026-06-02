@@ -75,9 +75,11 @@ export function normalizeFlatMetrics(m: FlatMetrics): HealthPayload {
 
   // HRV
   const hrvAvg = num(m.hrv_avg)
+  const hrvRecent = num(m.hrv_recent)
   const hrvDaily = dailyArr(m.hrv_daily, 'ms')
   if (hrvAvg !== undefined) {
     health.hrv_ms = { average: hrvAvg }
+    if (hrvRecent !== undefined) health.hrv_ms.recent = hrvRecent
     if (hrvDaily) health.hrv_ms.daily = hrvDaily as DailyHRV[]
   }
 
