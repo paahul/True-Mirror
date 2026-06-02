@@ -64,6 +64,25 @@ Build docs: **`build-your-own.md` (authoritative)** · `shortcut-mvp-build.md` �
 `shortcut-enrichment-build.md` · `friend-install-guide.md` · `architecture-thin-shortcut.md` ·
 `learnings.md`.
 
+---
+
+## Backlog — what's next (prioritized, 2026-06-02)
+
+Ordered by value × on-brand-ness × effort. All optional; it's a working personal tool today.
+
+1. **History-page polish** (near-term, low-risk, on-brand — the "polish what we have" lane, NOT
+   the M6 dashboard fork): brand cohesion with the landing page (warm paper bg, Newsreader serif,
+   teal accent), a "latest read" hero card with big scores + simple SVG rings, **Δ vs last run**
+   on each score, gradient area-fill + value labels on the trend charts, micro-animations,
+   nicer loading/empty states.
+2. **Add Sleep to the Shortcut** → unlocks the Sleep score (completes the four-score set).
+3. **Per-mode Claude prompts + data-gap detection** (old Phase 1g/1h) — distinct prompts per
+   mode; detect Watch-not-worn gaps and coach on charging. Narrative-deepening = the moat.
+4. **Charts fork** (M6) — decide (a) deepen-narrative vs (b) Whoop-style dashboard as a separate
+   "daily snapshot" Shortcut.
+5. **Dynamic source-filter research** (M8) — the "pick your wearable" feasibility check.
+6. **Email reminders** (M7) — Resend + Vercel Pro.
+
 (The "Phase" sections below predate this ordering and map roughly to these milestones.)
 
 ---
