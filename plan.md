@@ -6,31 +6,38 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
 
 ---
 
-## Milestones (current priority order)
+## Positioning (decided 2026-06-02)
 
-1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end
-2. 🟢 **iOS Shortcut (full metric capture, manual token)** — working on Paahul's iPhone with
-   steps, RHR, energy, exercise, HRV (avg + recent), VO2, respiratory, SpO2, weight → real
-   Recovery/Strain/Stress scores. **Only sleep remains** (the fiddly one) to unlock the Sleep
-   score; workouts skipped (Strain already computes). Sends a flat JSON body; **no registration
-   flow yet.** Architecture: **fat Shortcut** (`docs/architecture-thin-shortcut.md`).
-3. ✅ **History UI** — `/history` page with trend charts + toggles
-3.5. ✅ **Harden for missing metrics** (done 2026-06-02) — server now tolerates any subset.
-   The Shortcut sends a flat bag of whatever it has; `lib/normalize.ts` (`normalizeFlatMetrics`)
-   maps it to HealthPayload, coerces string→number (incl. daily arrays), and drops empties, so
-   no-Watch / no-weight users never break. `/api/analyze` accepts flat top-level keys, a
-   `metrics` bag, or nested `health`. Recovery/Stress compute from `hrv_recent` vs `hrv_avg`
-   (no daily loop needed).
-4. ⏳ **Onboard first friend (manual)** — provision one friend by hand (create user,
-   hardcode token, share signed iCloud link), validate real-world install + permission
-   friction + whether the analysis lands. See `docs/friend-install-guide.md`.
-5. ⏳ **Registration flow** — self-serve first-run (name/email/mode → token), one
-   shareable link, no per-person DB work. See `docs/shortcut-registration-build.md`.
-6. ⏳ **UI tuning** — polish report + history pages once there's real usage (deferred on purpose).
-7. ⏳ **Email reminders** — wire up Resend for charge/wear nudges (needs Vercel Pro for hourly cron).
+**True Mirror is a personal tool, not a broad-distribution product.** After validating on two
+real friends, the conclusion is that the iOS-Shortcut + HealthKit route trades App Store reach
+for per-device setup friction (permission gauntlet, Watch source-filter, manual provisioning)
+that no polish removes — and even a registration flow wouldn't fix it. So: make it solid for
+yourself + a motivated few, and keep the build docs airtight for anyone who wants their own.
+Authoritative guide: `docs/build-your-own.md`.
 
-Build docs: `shortcut-mvp-build.md` (done) · `shortcut-enrichment-build.md` ·
-`shortcut-registration-build.md` · `friend-install-guide.md` · `architecture-thin-shortcut.md`.
+## Milestones
+
+1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end.
+2. ✅ **iOS Shortcut (full metric capture, manual token)** — working on real phones with steps,
+   RHR, energy, exercise, HRV (avg + recent), VO2, respiratory, SpO2, weight → real
+   Recovery/Strain/Stress. Flat JSON body; **fat Shortcut** (`docs/architecture-thin-shortcut.md`).
+   *Optional remaining:* Sleep (unlocks the Sleep score) — fiddly, not done.
+3. ✅ **History UI** — `/history` with trend charts + toggles.
+3.5. ✅ **Harden for missing metrics** — server tolerates any subset (`lib/normalize.ts`),
+   coerces string→number, drops empties. Recovery/Stress from `hrv_recent` vs `hrv_avg`.
+4. ✅ **Onboard first friends (manual)** — validated end-to-end on two real phones (sparse +
+   dense data). Surfaced + fixed: dense-data crash (Group by Day), step double-count (Watch
+   source filter), send-permission gotcha. See `docs/learnings.md`.
+5. ❌ **Registration flow** — **dropped.** Doesn't remove the real friction; manual provisioning
+   is fine at personal scale. (`docs/shortcut-registration-build.md` kept for reference only.)
+6. ⏸️ **UI tuning / richer charts** — deferred. *Headline next item if resumed:* Whoop-style
+   per-day visuals (recovery rings, sleep-stage bars, strain curves). Needs richer per-day data
+   capture (sleep stages, daily HRV array) **and** charting UI.
+7. ⏸️ **Email reminders** — deferred (Resend + hourly cron → Vercel Pro).
+
+Build docs: **`build-your-own.md` (authoritative)** · `shortcut-mvp-build.md` ·
+`shortcut-enrichment-build.md` · `friend-install-guide.md` · `architecture-thin-shortcut.md` ·
+`learnings.md`.
 
 (The "Phase" sections below predate this ordering and map roughly to these milestones.)
 

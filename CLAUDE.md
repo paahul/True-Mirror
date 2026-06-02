@@ -16,24 +16,33 @@ Deployment details:
 - **DNS**: `truemirror.paahulhq.com` → `A 76.76.21.21` in Cloudflare, **DNS only (grey cloud)** — must stay grey or Vercel SSL breaks (525).
 - **Cron**: on Hobby plan, capped at daily — currently `0 13 * * *`. Revert to hourly (`0 * * * *`) when on Pro + email is wired (see plan.md Phase 4).
 
-## iOS Shortcut status (Milestone 2 — in progress)
+## Positioning (decided 2026-06-02)
 
-**MVP Shortcut works on Paahul's iPhone (2026-06-01).** Reads steps / resting HR / active
-energy / exercise (averages) → builds JSON in a Text action → POSTs as a **File** body to
-`/api/analyze?token=…` → shows Claude's analysis → saves to history. Paahul's own token:
-`3083b194-a2ab-4035-ac41-6af4a3985e55` (user "Paahul", performance mode).
+**Personal tool, not a broad-distribution product.** Validated on two real friends (Aditi,
+Abhishek); the iOS-Shortcut route's per-device setup friction (permissions, Watch source-filter,
+manual provisioning) doesn't scale and a registration flow wouldn't fix it. So: solid for self +
+a few, airtight build docs for the rest. Authoritative guide: `docs/build-your-own.md`.
 
-**Architecture decided (2026-06-01): FAT Shortcut.** An on-device test showed iOS won't
-serialize a health-sample list to JSON (it collapses to a single scalar), so the "thin
-Shortcut" idea is dead — aggregate in the Shortcut. See `docs/architecture-thin-shortcut.md`
-and `docs/learnings.md`.
+## iOS Shortcut status (Milestone 2 — WORKING)
 
-**What to do next (in order):**
-1. **Enrich metrics** — `docs/shortcut-enrichment-build.md` (HRV + sleep first → unlock
-   Recovery/Sleep scores; then daily arrays via the Group-by-Day loop → trends).
-2. **Onboard first friend manually** — `docs/friend-install-guide.md` (no registration flow yet).
-3. **Registration flow** (deferred) — `docs/shortcut-registration-build.md`.
-4. **UI tuning**, then **email** (Resend in cron route).
+Full metric capture working on real phones: steps, RHR, active energy, exercise, HRV (avg +
+**recent/7-day**), VO2 (Cardio Fitness), respiratory, SpO2, weight → real Recovery/Strain/Stress.
+Sends a **flat JSON body** (Request Body = JSON, Text values; server coerces). Ends with
+`Open URLs` → `/history?token=…` so it lands on the user's page. Paahul's token:
+`3083b194-a2ab-4035-ac41-6af4a3985e55`. **Architecture: FAT Shortcut** (iOS won't serialize raw
+sample lists). Recovery/Stress compute from `hrv_recent` vs `hrv_avg` — **no daily loop**.
+
+Critical build rules (from real failures, see `docs/learnings.md`):
+- **`Group by: Day` on every 30-day Find** — or dense metrics (Active Energy) crash the Shortcut.
+- **Apple Watch users: Source filter → their Watch** on Steps/Energy/Exercise — or ~2× double-count.
+- Server (`lib/normalize.ts`) tolerates **any subset** of metrics (no-Watch/no-weight users are fine).
+
+**What's next (if/when resumed — currently paused):**
+1. **Richer charts (headline):** Whoop-style per-day visuals — needs more granular capture
+   (sleep stages, daily HRV array) **and** charting UI. (Abhishek requested.)
+2. **Sleep** metric → unlock the Sleep score.
+3. UI polish, email reminders — deferred.
+4. **Registration flow — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
 
 See `plan.md` "Milestones" for the full ordering.
 

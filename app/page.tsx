@@ -252,17 +252,30 @@ export default function Home() {
       {/* Get it */}
       <Section kicker="Getting started" title="How to get it">
         <p style={{ color: '#3a3a36', margin: '0 0 18px' }}>
-          True Mirror is in a small private beta with friends and family. If someone sent you the
-          Shortcut link, setup takes about two minutes:
+          True Mirror is a <strong>personal tool</strong>, not an App Store app — by design.
+          There's no one-tap install, but there are two ways in:
         </p>
-        <ol style={{ color: MUTED, fontSize: 15, paddingLeft: 20, margin: '0 0 28px', display: 'grid', gap: 6 }}>
-          <li>Tap the link → <strong style={{ color: INK }}>Add Shortcut</strong>.</li>
-          <li>Settings → Shortcuts → Advanced → turn on <strong style={{ color: INK }}>Allow Sharing Large Amounts of Data</strong>.</li>
-          <li>Run it → <strong style={{ color: INK }}>Allow</strong> the Health prompts, then <strong style={{ color: INK }}>Always Allow</strong> sending your summary.</li>
-          <li>Read your analysis. Tap the Shortcut anytime to run it again.</li>
-        </ol>
+        <div style={{ display: 'grid', gap: 14, marginBottom: 28 }}>
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Build your own</div>
+            <div style={{ color: MUTED, fontSize: 15 }}>
+              It&rsquo;s open source. Deploy the small backend and assemble one iOS Shortcut
+              (~1 hour, once), then it&rsquo;s yours forever. Full step-by-step in the{' '}
+              <a href="https://github.com/paahul/True-Mirror/blob/main/docs/build-your-own.md" style={{ color: ACCENT }}>
+                build guide
+              </a>.
+            </div>
+          </div>
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Ask me to set you up</div>
+            <div style={{ color: MUTED, fontSize: 15 }}>
+              If you&rsquo;d rather not build it, I hand-provision a copy for friends. Heads-up:
+              first-run involves a few iOS Health permission taps (it only ever reads your data).
+            </div>
+          </div>
+        </div>
         <a
-          href="mailto:sikandpaahul@gmail.com?subject=True%20Mirror%20invite"
+          href="mailto:sikandpaahul@gmail.com?subject=True%20Mirror"
           style={{
             display: 'inline-block',
             background: ACCENT,
@@ -274,7 +287,7 @@ export default function Home() {
             fontWeight: 600,
           }}
         >
-          Request an invite →
+          Reach out →
         </a>
       </Section>
 

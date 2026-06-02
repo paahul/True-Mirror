@@ -6,7 +6,12 @@ True Mirror reads your last 30 days of Apple Health and Apple Fitness data via a
 
 No App Store. No 2GB export. No login.
 
-**Live:** [truemirror.paahulhq.com](https://truemirror.paahulhq.com) (currently a small private beta — invite by [email](mailto:sikandpaahul@gmail.com?subject=True%20Mirror%20invite))
+**Live:** [truemirror.paahulhq.com](https://truemirror.paahulhq.com)
+
+> **It's a personal tool, not an App Store product — by design.** There's no frictionless install
+> (the iOS Shortcut + HealthKit route trades App Store distribution for real per-device setup
+> friction). Great for yourself or a motivated friend; not for the masses. **Build your own:**
+> see [`docs/build-your-own.md`](docs/build-your-own.md).
 
 ## What you get
 
@@ -86,13 +91,18 @@ Loading a report or history page is just a Supabase read — no AI call per view
 
 | Milestone | What it is | Status |
 |---|---|---|
-| **M1 — Backend** | Schema, register/analyze/cron routes, server-side scores, shareable report pages — deployed with a custom domain + SSL | ✅ Shipped |
-| **M2 — iOS Shortcut** | HealthKit → JSON → POST → analysis. MVP works on-device; full metric capture next (fat-Shortcut decided) | 🟡 In progress |
-| **M3 — History UI** | `/history`: Recovery/Sleep trend charts, score chips, expandable analyses, mode + opt-out toggles | ✅ Shipped |
-| **M4 — Onboard first friend** | Manual provisioning + permission walkthrough; validate the real-world flow before automating it | ⏳ Next |
-| **M5 — Registration flow** | Self-serve first-run (name/email/mode → token) so one link self-provisions everyone | ⏳ Planned |
-| **M6 — UI tuning** | Polish report + history pages once there's real usage | ⏳ Planned |
-| **M7 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏳ Planned |
+| **M1 — Backend** | Schema, analyze/cron routes, server-side scores, shareable report pages — deployed with a custom domain + SSL | ✅ Shipped |
+| **M2 — iOS Shortcut** | HealthKit → JSON → POST → analysis. Full metric capture (steps, RHR, HRV, energy, exercise, VO₂, respiratory, SpO2, weight) → real Recovery/Strain/Stress. Tolerant of any data subset | ✅ Working |
+| **M3 — History UI** | `/history`: trend charts, score chips, expandable analyses, mode + opt-out toggles | ✅ Shipped |
+| **M4 — Onboard first friends** | Manual provisioning; validated end-to-end on two real (non-builder) phones, sparse and dense data | ✅ Done |
+| **M5 — Registration flow** | Self-serve first-run token provisioning | ❌ Dropped — doesn't remove the real (permission/device) friction; manual provisioning is fine at personal scale |
+| **M6 — UI tuning / richer charts** | Whoop-style per-day visuals; needs more granular capture | ⏸️ Deferred |
+| **M7 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏸️ Deferred |
+
+Scope call (2026-06-02): after validating on real friends, this is a **personal tool**, not a
+broad-distribution product — the iOS Shortcut route trades App Store reach for per-device setup
+friction that no amount of polish removes. Energy goes into making it solid for yourself + a few
+people, and into airtight docs (`docs/build-your-own.md`) for anyone who wants to build their own.
 
 ## Privacy
 
@@ -139,20 +149,18 @@ Recurring cost for a personal deploy: ~$0/month + pennies per analysis.
 
 ## Getting started
 
-If someone sent you the Shortcut link, setup takes about two minutes:
+**Build your own** (it's open source): deploy the backend + assemble one iOS Shortcut (~1 hour,
+once) → **[`docs/build-your-own.md`](docs/build-your-own.md)** has the airtight end-to-end steps.
 
-1. Tap the link → **Add Shortcut**.
-2. Settings → Shortcuts → Advanced → turn on **Allow Sharing Large Amounts of Data**.
-3. Run it → **Allow** the Health prompts, then **Always Allow** sending your summary.
-4. Read your analysis. Tap the Shortcut anytime to run it again.
-
-[Request an invite →](mailto:sikandpaahul@gmail.com?subject=True%20Mirror%20invite)
+Or, if you'd rather not build it, [reach out](mailto:sikandpaahul@gmail.com?subject=True%20Mirror)
+and I'll hand-provision a copy (heads-up: first-run involves a few one-time iOS Health permission taps).
 
 ## Project docs
 
+- **[`docs/build-your-own.md`](docs/build-your-own.md)** — the airtight end-to-end build guide (start here to make your own)
 - [`why.md`](why.md) — why this exists, the competitive gap, the Watch-charging angle
-- [`plan.md`](plan.md) — full build plan, milestones, payload spec, open questions
-- [`docs/`](docs/) — Shortcut build guides, friend install + permissions, architecture notes, learnings log
+- [`plan.md`](plan.md) — build plan, milestones, payload spec, open questions
+- [`docs/`](docs/) — detailed Shortcut build steps, install guide, architecture notes, and `learnings.md` (every gotcha we hit + why)
 - [`CLAUDE.md`](CLAUDE.md) — context for working on this with Claude Code
 
 ## Why I built this
