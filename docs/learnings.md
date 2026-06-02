@@ -52,6 +52,28 @@ the in-Shortcut Group-by-Day loop; no backend ingest layer. Details in
 become a large speculative rewrite. When the unknown is "what does this opaque platform
 actually do," test the smallest real version before designing around an assumption.
 
+## 2026-06-02 — The Shortcut must be resilient to missing metrics (before sharing)
+**Caught by:** Paahul (the builder).
+
+**The catch:** the hand-typed Text JSON body breaks if any metric has no data — an empty
+variable yields `"key": ,` (invalid JSON). For Paahul's own device that never happens, but
+across a **broad user base** (no Watch → no HRV/VO2; never logged weight, etc.) it would fail
+constantly. "Just drop the field manually" doesn't scale to real users.
+
+**The fix (a dedicated hardening pass, before Milestone 4 / sharing):**
+1. **Shortcut:** build the request body with a **Dictionary action** that only adds keys that
+   have a value (skip-empty), instead of a hand-typed Text template. Natively valid JSON, and
+   it also removes the smart-quote breakage risk.
+2. **Backend:** add null/empty guards in `lib/claude.ts` (`buildHealthSummary`) so any
+   missing metric is simply skipped, never `.toLocaleString()`-on-null crashes. `lib/scores.ts`
+   is mostly guarded already via optional chaining.
+
+**Status:** known gap. Fine to finish Paahul's personal build with the Text template (his data
+exists); **must harden before onboarding anyone else.**
+
+**Meta-lesson:** "works on the builder's device" ≠ "works for the segment." Pressure-test the
+unhappy path (missing data, no Watch) before shipping to others.
+
 <!-- Add new entries above this line, newest first. Format:
 ## YYYY-MM-DD — short title
 **Caught by:** who

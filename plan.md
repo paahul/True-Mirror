@@ -15,9 +15,14 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
    2026-06-01 → **fat Shortcut** (iOS won't serialize raw sample arrays; see
    `docs/architecture-thin-shortcut.md`).
 3. ✅ **History UI** — `/history` page with trend charts + toggles
+3.5. ⏳ **Harden for missing metrics (BEFORE sharing)** — the Shortcut must emit valid JSON
+   for users missing any metric (no Watch, no logged weight, etc.). Fix: build the body with a
+   **Dictionary action** (skip-empty) instead of the hand-typed Text template, and add
+   null-guards in `lib/claude.ts buildHealthSummary`. Paahul's own build is fine (he has the
+   data); this only blocks broad sharing. Caught 2026-06-02 — see `docs/learnings.md`.
 4. ⏳ **Onboard first friend (manual)** — provision one friend by hand (create user,
    hardcode token, share signed iCloud link), validate real-world install + permission
-   friction + whether the analysis lands. See `docs/friend-install-guide.md`.
+   friction + whether the analysis lands. See `docs/friend-install-guide.md`. **Blocked by 3.5.**
 5. ⏳ **Registration flow** — self-serve first-run (name/email/mode → token), one
    shareable link, no per-person DB work. See `docs/shortcut-registration-build.md`.
 6. ⏳ **UI tuning** — polish report + history pages once there's real usage (deferred on purpose).
