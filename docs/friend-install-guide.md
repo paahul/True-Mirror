@@ -40,20 +40,20 @@ Keep their token handy.
 
 *(This is the real flow, verified on a friend's phone 2026-06-02.)*
 
-1. **Tap the link** → **Add Shortcut**.
-2. *(Optional)* Long-press the Shortcut → **Share → Add to Home Screen** for an app-like icon.
-3. **Do this BEFORE running** (or the first run fails): **Settings → Shortcuts → Advanced →**
-   turn ON **"Allow Sharing Large Amounts of Data."**
-4. **Run it.** iOS asks to read each health type — tap **Allow** for each (≈10 prompts;
-   tap **Turn On All** if offered). This is the bulk of the setup, and it's one-time.
+1. **First, one setting (do this before anything else):** open **Settings → Shortcuts →
+   Advanced** and turn ON **"Allow Sharing Large Amounts of Data."** (Doing this first avoids a
+   failed first run.)
+2. **Tap the link** → **Add Shortcut**.
+3. *(Optional)* Long-press the Shortcut → **Share → Add to Home Screen** for an app-like icon.
+4. **Run it.** A "Would Like to Access Your Health Data" screen appears — tap **Turn On All** at
+   the top (one tap grants every type), then **Allow**. *(One-time — it won't ask again.)*
 5. **"Allow … to send health data to truemirror.paahulhq.com?"** → **Always Allow**
    (sends only computed summaries — the whole point).
 6. **Wait ~20 seconds** (Claude is analyzing 30 days) → your **history page opens with your
    analysis**. Done. Tap the Shortcut (or its Home Screen icon) anytime to refresh.
 
-**Heads-up on the first run:** if you skipped step 3, the first run errors with a
-"large amounts of data" message — just flip that setting and run again. Likewise, if you tapped
-"Don't Allow" on anything, re-run and allow it.
+**If anything fails:** "large amounts of data" error → you skipped step 1, flip it and re-run.
+Missing data in the analysis → you tapped a toggle off; re-run and **Turn On All**.
 
 **Your page is your home:** the Shortcut opens `truemirror.paahulhq.com/history?token=…`
 (your private link) — add it to your Home Screen to revisit anytime; it shows trends as you
