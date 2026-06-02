@@ -32,6 +32,24 @@ function arr<T>(v: unknown): T[] | undefined {
   return Array.isArray(v) && v.length > 0 ? (v as T[]) : undefined
 }
 
+// Daily arrays arrive as [{ date, <valueKey> }] where the value may be a string
+// (Shortcut dictionaries stringify). Coerce the value to a number and drop any
+// malformed entries. Returns undefined if nothing valid remains.
+function dailyArr<K extends string>(
+  v: unknown,
+  valueKey: K,
+): (Record<K, number> & { date: string })[] | undefined {
+  if (!Array.isArray(v) || v.length === 0) return undefined
+  const out = v.flatMap((e) => {
+    if (!e || typeof e !== 'object') return []
+    const date = (e as Record<string, unknown>).date
+    const val = num((e as Record<string, unknown>)[valueKey])
+    if (date === undefined || date === null || date === '' || val === undefined) return []
+    return [{ date: String(date), [valueKey]: val } as Record<K, number> & { date: string }]
+  })
+  return out.length > 0 ? out : undefined
+}
+
 export function normalizeFlatMetrics(m: FlatMetrics): HealthPayload {
   const health: HealthPayload = { period_days: num(m.period_days) ?? 30 }
 
@@ -41,26 +59,26 @@ export function normalizeFlatMetrics(m: FlatMetrics): HealthPayload {
   // Steps — needs at least an average or total to be meaningful
   const stepsAvg = num(m.steps_avg)
   const stepsTotal = num(m.steps_total)
-  const stepsDaily = arr<DailySteps>(m.steps_daily)
+  const stepsDaily = dailyArr(m.steps_daily, 'count')
   if (stepsAvg !== undefined || stepsTotal !== undefined) {
     health.steps = { average: stepsAvg ?? 0, total: stepsTotal ?? 0 }
-    if (stepsDaily) health.steps.daily = stepsDaily
+    if (stepsDaily) health.steps.daily = stepsDaily as DailySteps[]
   }
 
   // Resting heart rate
   const rhrAvg = num(m.rhr_avg)
-  const rhrDaily = arr<DailyHeartRate>(m.rhr_daily)
+  const rhrDaily = dailyArr(m.rhr_daily, 'bpm')
   if (rhrAvg !== undefined) {
     health.heart_rate = { resting_average: rhrAvg }
-    if (rhrDaily) health.heart_rate.daily_resting = rhrDaily
+    if (rhrDaily) health.heart_rate.daily_resting = rhrDaily as DailyHeartRate[]
   }
 
   // HRV
   const hrvAvg = num(m.hrv_avg)
-  const hrvDaily = arr<DailyHRV>(m.hrv_daily)
+  const hrvDaily = dailyArr(m.hrv_daily, 'ms')
   if (hrvAvg !== undefined) {
     health.hrv_ms = { average: hrvAvg }
-    if (hrvDaily) health.hrv_ms.daily = hrvDaily
+    if (hrvDaily) health.hrv_ms.daily = hrvDaily as DailyHRV[]
   }
 
   const vo2 = num(m.vo2)
@@ -74,18 +92,18 @@ export function normalizeFlatMetrics(m: FlatMetrics): HealthPayload {
 
   // Active energy
   const energyAvg = num(m.energy_avg)
-  const energyDaily = arr<DailyEnergy>(m.energy_daily)
+  const energyDaily = dailyArr(m.energy_daily, 'kcal')
   if (energyAvg !== undefined) {
     health.active_energy = { average: energyAvg }
-    if (energyDaily) health.active_energy.daily = energyDaily
+    if (energyDaily) health.active_energy.daily = energyDaily as DailyEnergy[]
   }
 
   // Exercise minutes
   const exAvg = num(m.exercise_avg)
-  const exDaily = arr<DailyExercise>(m.exercise_daily)
+  const exDaily = dailyArr(m.exercise_daily, 'minutes')
   if (exAvg !== undefined) {
     health.exercise_minutes = { average: exAvg }
-    if (exDaily) health.exercise_minutes.daily = exDaily
+    if (exDaily) health.exercise_minutes.daily = exDaily as DailyExercise[]
   }
 
   // Sleep — needs at least hours asleep
