@@ -25,11 +25,11 @@ This means:
 
 The backend is a Next.js API route on Vercel. It receives the health JSON, calls Claude, and returns a structured analysis. Supabase stores history per user.
 
-## Why nobody has done this
+## Why it's uncommon (and why I built my own)
 
-The Shortcuts-as-data-pipeline approach requires two things that rarely overlap in the same person: knowing Shortcuts well enough to use it as an API client, and knowing how to build and deploy a web backend. Developers who can build the backend default to native iOS because that's the "proper" HealthKit path. Power users who know Shortcuts don't think to connect it to an API they built. The idea is invisible from both directions.
+The Shortcuts-as-data-pipeline approach needs two things that don't often overlap in one person: knowing Shortcuts well enough to use it as an API client, and being able to build and deploy a web backend. Developers who can build the backend tend to default to native iOS (the "proper" HealthKit path); power users who know Shortcuts don't usually think to point it at an API they built.
 
-After searching GitHub, the pattern genuinely doesn't exist as a clean deployable project. Lots of XML-export parsers. Lots of native iOS apps. Zero examples of Shortcuts → webhook → LLM → per-user history.
+When I looked, I didn't find a clean, deployable version of this pattern — plenty of XML-export parsers and native iOS apps, but not a simple Shortcuts → webhook → LLM → per-user-history setup I could just use. So I built one for myself. (I'm not claiming it's never been done — just that it wasn't sitting there ready to use, and the per-device setup friction, which I learned the hard way, is a big reason it stays a personal tool rather than a product.)
 
 ## What Apple Health vs Apple Fitness means in practice
 

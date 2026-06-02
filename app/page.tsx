@@ -206,9 +206,9 @@ export default function Home() {
       </Section>
 
       {/* Why different */}
-      <Section kicker="Why it’s different" title="The shortcut nobody else took">
+      <Section kicker="Why it’s different" title="Using Shortcuts as the pipeline">
         <p style={{ color: '#3a3a36', margin: '0 0 12px' }}>
-          Every other way to get AI on your Apple Health data has a catch. The native apps need the
+          Most ways to get AI on your Apple Health data have a catch. The native apps need the
           App Store and a separate download per person. The DIY route makes you run Apple’s “Export
           All Health Data” — 30–45 minutes that locks up your phone and spits out a 2GB file most
           people never touch twice.

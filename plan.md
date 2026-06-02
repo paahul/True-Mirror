@@ -34,6 +34,16 @@ Authoritative guide: `docs/build-your-own.md`.
    per-day visuals (recovery rings, sleep-stage bars, strain curves). Needs richer per-day data
    capture (sleep stages, daily HRV array) **and** charting UI.
 7. ⏸️ **Email reminders** — deferred (Resend + hourly cron → Vercel Pro).
+8. 🔬 **Research: dynamic "pick your wearable" source filter** — prove/disprove. The Watch
+   Source filter is device-specific, so it can't be pre-set for someone else's phone (and a
+   server-captured device name can't be injected into a `Find Health Samples` filter at
+   runtime). The only viable path is on-device: a first-run "pick your wearable" step stored
+   locally, used as a **dynamic Source filter value** — *if* the Source filter accepts a
+   variable / "Ask Each Time". **To verify:** on-device, check whether the Source filter value
+   can be a Variable / Ask Each Time, or if a generic "Apple Watch" / device-type option exists
+   (vs only specific named devices). If yes → cheap-ish fix for the double-count without per-user
+   tweaks (but it re-opens registration-flow-style complexity, so only worth it if pushing wider).
+   If no → the manual per-Watch-friend source tweak stays.
 
 Build docs: **`build-your-own.md` (authoritative)** · `shortcut-mvp-build.md` ·
 `shortcut-enrichment-build.md` · `friend-install-guide.md` · `architecture-thin-shortcut.md` ·

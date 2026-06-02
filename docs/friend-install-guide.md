@@ -8,6 +8,13 @@ and share it as a signed iCloud link.
 
 ## Part A — What you (Paahul) do
 
+> **Provision from a filter-free "sharing template," not your personal copy.** Your own Shortcut
+> has a **Source filter → your Apple Watch** on Steps/Energy/Exercise (to fix double-counting).
+> That filter points at *your specific device*, so a copy made from it would return **empty**
+> step/energy/exercise data on someone else's phone. Keep a second copy with the source filters
+> **removed** as your sharing template, and provision friends from that. Watch-wearing friends
+> then add *their own* Watch source filter once (Part B). Phone-only friends need nothing.
+
 ### 1. Create their user row
 Create a user and grab the token (ask Claude to run this, or do it via Supabase):
 ```

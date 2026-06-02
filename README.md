@@ -43,7 +43,7 @@ The scoring uses citable methods, so you can check the math.
 
 A few decisions worth calling out:
 
-- **Shortcuts as a data pipeline.** iOS Shortcuts has native HealthKit access, so there's no native app and no XML export — the Shortcut reads your metrics and POSTs a summary to a Next.js API. (An on-device test confirmed iOS won't serialize a raw sample list, so the Shortcut aggregates before sending — see [`docs/learnings.md`](docs/learnings.md).)
+- **Shortcuts as a data pipeline.** iOS Shortcuts has native HealthKit access, so there's no native app and no XML export — the Shortcut reads your metrics and POSTs a summary to a Next.js API. I couldn't find a clean, deployable version of this pattern, so I built one. (An on-device test confirmed iOS won't serialize a raw sample list, so the Shortcut aggregates before sending — see [`docs/learnings.md`](docs/learnings.md).)
 - **Calibrated honesty is the product.** No streaks or badges — it says what's in the data, even when that's "your sleep's been slipping for three weeks."
 - **Scores grounded in published methods**, not vibes — Oura-style sleep, Altini/HRV4Training recovery, Banister TRIMP strain. They orient Claude; Claude grounds its prose in the raw figures.
 - **Scores are recomputed, not stored.** The DB keeps only the raw payload + analysis text; the history endpoint recomputes scores from `raw_data` on read, so trend charts work retroactively and there's one source of truth for the math.
@@ -120,7 +120,7 @@ Every existing way to get AI analysis on your Apple Health data has a meaningful
 
 **The gap:** iOS Shortcuts has native HealthKit access. You can read specific metrics — steps, sleep stages, HRV, resting heart rate, workouts, VO₂ max — format them as JSON, and POST to an API in seconds. No App Store, no Xcode, no export. The phone stays usable.
 
-The reason nobody packaged this cleanly is that it sits at the intersection of two groups that rarely overlap: people who know Shortcuts well enough to use it as a data pipeline, and people who can build and deploy a web backend. True Mirror is that intersection.
+This sits between two things that don't overlap much — using Shortcuts as a data pipeline, and building a web backend — which is probably why I couldn't find a clean version to just use. So I built one for myself. (As we found out, the "no friction" part only goes so far: the per-device iOS setup is real — which is why this stays a personal tool, not a product.)
 
 ## Local setup
 
