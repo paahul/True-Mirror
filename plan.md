@@ -30,9 +30,24 @@ Authoritative guide: `docs/build-your-own.md`.
    source filter), send-permission gotcha. See `docs/learnings.md`.
 5. ❌ **Registration flow** — **dropped.** Doesn't remove the real friction; manual provisioning
    is fine at personal scale. (`docs/shortcut-registration-build.md` kept for reference only.)
-6. ⏸️ **UI tuning / richer charts** — deferred. *Headline next item if resumed:* Whoop-style
-   per-day visuals (recovery rings, sleep-stage bars, strain curves). Needs richer per-day data
-   capture (sleep stages, daily HRV array) **and** charting UI.
+6. ⏸️ **UI tuning / richer charts — DECISION FORK (deferred).** Abhishek asked for Whoop-style
+   visuals. Before building, decide the direction — they're genuinely different products:
+
+   - **(a) Deepen the narrative** *(on-brand):* capture light **day-over-day** data so Claude's
+     read gets sharper ("recovery down 12 vs yesterday — back off today"). Day-granularity in
+     service of the honest analysis, not a dashboard. Plus polish the existing trend charts.
+   - **(b) Whoop-style dashboard** *(off the moat):* recovery rings, strain curves, sleep-stage
+     bars. Needs rich per-day capture (sleep stages, daily arrays) — which means the Group-by-Day
+     **Repeat loops** we deliberately removed.
+
+   **Framing for the decision:**
+   - We're **free and staying free** — we are *not* competing with Whoop/Oura ($-paid, native
+     sensors, polished UI). Trying to out-visual them is a fight on their home field; being a
+     *free, honest read* is the niche. The narrative is the moat, not the charts.
+   - **Likely structure: a separate "daily snapshot" Shortcut** for the dashboard direction, so
+     the per-day capture + loop friction lives in an optional artifact and the **core narrative
+     Shortcut stays lean and buildable**. Don't bolt the dashboard onto the main shortcut.
+   - Default lean: **(a)** — deepen the narrative; only do **(b)** if there's real pull for it.
 7. ⏸️ **Email reminders** — deferred (Resend + hourly cron → Vercel Pro).
 8. 🔬 **Research: dynamic "pick your wearable" source filter** — prove/disprove. The Watch
    Source filter is device-specific, so it can't be pre-set for someone else's phone (and a

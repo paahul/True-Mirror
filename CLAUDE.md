@@ -38,8 +38,11 @@ Critical build rules (from real failures, see `docs/learnings.md`):
 - Server (`lib/normalize.ts`) tolerates **any subset** of metrics (no-Watch/no-weight users are fine).
 
 **What's next (if/when resumed — currently paused):**
-1. **Richer charts (headline):** Whoop-style per-day visuals — needs more granular capture
-   (sleep stages, daily HRV array) **and** charting UI. (Abhishek requested.)
+1. **Charts — DECISION FORK (headline, see plan.md M6):** (a) deepen the narrative with light
+   day-over-day capture (on-brand) vs (b) Whoop-style dashboard (rings/curves — re-opens the
+   per-day Repeat loops). We're free, not competing with paid sensor apps, so the narrative is
+   the moat. If (b), likely a **separate "daily snapshot" Shortcut** to keep the core one lean.
+   Default lean: (a).
 2. **Sleep** metric → unlock the Sleep score.
 3. UI polish, email reminders — deferred.
 4. **Registration flow — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
