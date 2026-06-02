@@ -160,8 +160,8 @@ function ScoreChip({ label, value, color }: { label: string; value: string; colo
   )
 }
 
-function ReportCard({ report }: { report: HistoryReport }) {
-  const [open, setOpen] = useState(false)
+function ReportCard({ report, defaultOpen = false }: { report: HistoryReport; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
   const [copied, setCopied] = useState(false)
   const { scores } = report
 
@@ -445,7 +445,7 @@ export default function HistoryClient() {
           No analyses yet. Run the Shortcut to get your first one — it&rsquo;ll show up here.
         </p>
       ) : (
-        data.reports.map((r) => <ReportCard key={r.id} report={r} />)
+        data.reports.map((r, i) => <ReportCard key={r.id} report={r} defaultOpen={i === 0} />)
       )}
     </>,
   )
