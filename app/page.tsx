@@ -216,7 +216,9 @@ export default function Home() {
         <p style={{ color: '#3a3a36', margin: 0 }}>
           iOS Shortcuts already has HealthKit access built in. True Mirror uses it as a data
           pipeline: read your metrics, send a small summary to a private API, get Claude’s analysis
-          back. You install by tapping a link, and your phone stays usable the whole time.
+          back — no App Store, no Xcode, no 2GB export. The honest trade-off: first-run setup is a
+          handful of one-time iOS permission taps (it only ever reads your data). That friction is
+          exactly why this is a personal tool, not a polished product.
         </p>
       </Section>
 
