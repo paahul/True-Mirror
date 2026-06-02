@@ -30,6 +30,13 @@ energy/exercise; Sleep/Recovery will be null until we add sleep + HRV).
 
 Add these actions in order. Search the action by name in the bottom search bar.
 
+> ⚠️ **Always set `Group by: Day` on every `Find Health Samples` action** (except the
+> "most-recent value" ones that use Limit 1). Dense metrics — **Active Energy** especially —
+> have hundreds of samples/day; summing thousands of raw samples crashes the Shortcut for
+> data-rich users ("there was a problem running"). Group by Day pre-aggregates to ~30 values,
+> so Calculate Statistics is fast and the result is identical. (Learned the hard way — see
+> `learnings.md`, 2026-06-02.)
+
 ### 1. Steps — total
 1. **Find Health Samples**
    - Sample type: **Step Count**

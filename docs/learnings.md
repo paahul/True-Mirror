@@ -96,6 +96,27 @@ failed runs before it works. Most of this is the **unavoidable iOS tax** for any
 - UX win shipped same day: the Shortcut now ends by opening the user's `/history` page
   (latest analysis auto-expanded) → a persistent, app-like home instead of a transient alert.
 
+## 2026-06-02 — Dense metrics (Active Energy) crash the Shortcut; fix = Group by Day
+**Caught by:** Paahul (debugging why Abhishek's run failed where Aditi's worked).
+
+**Symptom:** "There was a problem running the shortcut" on a friend with **lots** of health
+data, while a friend with sparse data succeeded. Nothing saved server-side (crash happened
+before the POST). Backend, token, and copy structure were all fine.
+
+**Cause:** `Find Health Samples → Calculate Statistics (Sum)` over a *dense* metric —
+**Active Energy** especially (hundreds of samples/day) — means summing thousands of raw
+samples, which times out / errors in Shortcuts. Sparse-data users stay under the limit;
+dense-data users crash. (Well-documented Shortcuts perf gotcha.)
+
+**Fix:** set **Group by: Day** on the Find action. iOS pre-aggregates to ~30 daily values, so
+Calculate Statistics runs over 30 items instead of thousands — same result, ~10min→<5s.
+Apply to all 30-day metrics (steps, active energy, exercise, RHR, HRV, respiratory, SpO2);
+not needed for VO2/Weight (Limit 1). Build guides updated.
+
+**Meta-lesson:** "works on the builder's phone" hid this too — Paahul's data wasn't dense
+enough to trip it. Same theme as the missing-metric gap: test against the *range* of real
+users, not just your own device.
+
 <!-- Add new entries above this line, newest first. Format:
 ## YYYY-MM-DD — short title
 **Caught by:** who
