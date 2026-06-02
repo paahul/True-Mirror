@@ -8,18 +8,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://truemirror.paahulh
 
 export async function POST(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
-  console.log('[analyze] HIT token=', token ? token.slice(0, 8) : 'none')
   if (!token) {
     return NextResponse.json({ error: 'token query param is required' }, { status: 401 })
   }
 
   let body: AnalyzeRequest
   try {
-    const rawText = await req.text()
-    console.log('[analyze] body bytes=', rawText.length, 'preview=', rawText.slice(0, 300))
-    body = JSON.parse(rawText)
-  } catch (e) {
-    console.log('[analyze] JSON parse failed:', e instanceof Error ? e.message : String(e))
+    body = await req.json()
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
