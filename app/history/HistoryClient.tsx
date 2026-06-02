@@ -61,37 +61,51 @@ function renderAnalysis(text: string) {
     })
 }
 
-// --- Animated circular gauge -------------------------------------------------
+// --- Animated circular gauge (with count-up + glow; dark variant) -----------
 function Ring({
   value,
-  display,
   color,
   label,
   delta,
   deltaColor,
+  dark = false,
 }: {
   value: number
-  display: string
   color: string
   label: string
   delta: number | null
   deltaColor: string
+  dark?: boolean
 }) {
-  const R = 30
-  const SW = 7
+  const R = 36
+  const SW = 8
   const C = 2 * Math.PI * R
-  const BOX = (R + SW) * 2 + 4
+  const BOX = (R + SW) * 2 + 6
   const pct = Math.max(0, Math.min(value, 100)) / 100
   const [off, setOff] = useState(C)
+  const [shown, setShown] = useState(0)
+
   useEffect(() => {
     const t = setTimeout(() => setOff(C * (1 - pct)), 80)
-    return () => clearTimeout(t)
-  }, [C, pct])
+    let raf = 0
+    const dur = 950
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1)
+      setShown(Math.round(value * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => {
+      clearTimeout(t)
+      cancelAnimationFrame(raf)
+    }
+  }, [C, pct, value])
 
   return (
-    <div style={{ textAlign: 'center', minWidth: 88 }}>
+    <div style={{ textAlign: 'center', minWidth: 96 }}>
       <svg width={BOX} height={BOX} viewBox={`0 0 ${BOX} ${BOX}`} style={{ display: 'block', margin: '0 auto' }}>
-        <circle cx={BOX / 2} cy={BOX / 2} r={R} fill="none" stroke={TRACK} strokeWidth={SW} />
+        <circle cx={BOX / 2} cy={BOX / 2} r={R} fill="none" stroke={dark ? 'rgba(255,255,255,0.12)' : TRACK} strokeWidth={SW} />
         <circle
           cx={BOX / 2}
           cy={BOX / 2}
@@ -103,21 +117,21 @@ function Ring({
           strokeDasharray={C}
           strokeDashoffset={off}
           transform={`rotate(-90 ${BOX / 2} ${BOX / 2})`}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)' }}
+          style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)', filter: dark ? `drop-shadow(0 0 6px ${color})` : 'none' }}
         />
         <text
           x="50%"
           y="50%"
           textAnchor="middle"
           dominantBaseline="central"
-          style={{ fontFamily: SERIF, fontSize: 23, fontWeight: 600, fill: INK }}
+          style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, fill: dark ? '#fbf7f0' : INK }}
         >
-          {display}
+          {shown}
         </text>
       </svg>
-      <div style={{ fontSize: 12.5, color: INK, marginTop: 6, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 13, color: dark ? '#cfd6cf' : INK, marginTop: 7, fontWeight: 500 }}>{label}</div>
       {delta != null && delta !== 0 && (
-        <div style={{ fontSize: 11, color: deltaColor, fontWeight: 600, marginTop: 1 }}>
+        <div style={{ fontSize: 11.5, color: deltaColor, fontWeight: 600, marginTop: 2 }}>
           {delta > 0 ? '↑' : '↓'}{Math.abs(delta)} vs last
         </div>
       )}
@@ -125,7 +139,7 @@ function Ring({
   )
 }
 
-function StressPill({ level }: { level: 'low' | 'moderate' | 'high' }) {
+function StressPill({ level, dark = false }: { level: 'low' | 'moderate' | 'high'; dark?: boolean }) {
   const c = stressColor(level)
   return (
     <span
@@ -134,14 +148,14 @@ function StressPill({ level }: { level: 'low' | 'moderate' | 'high' }) {
         alignItems: 'center',
         gap: 7,
         fontSize: 13,
-        color: INK,
-        background: CARD,
-        border: `1px solid ${BORDER}`,
+        color: dark ? '#e9e4da' : INK,
+        background: dark ? 'rgba(255,255,255,0.07)' : CARD,
+        border: dark ? '1px solid rgba(255,255,255,0.16)' : `1px solid ${BORDER}`,
         borderRadius: 999,
         padding: '6px 14px',
       }}
     >
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c, boxShadow: dark ? `0 0 6px ${c}` : 'none' }} />
       Stress <strong style={{ color: c, textTransform: 'capitalize' }}>{level}</strong>
     </span>
   )
@@ -417,54 +431,61 @@ export default function HistoryClient() {
           style={{
             background: CARD,
             border: `1px solid ${BORDER}`,
-            borderRadius: 16,
-            padding: '22px 22px 20px',
+            borderRadius: 18,
+            overflow: 'hidden',
             margin: '22px 0 26px',
+            boxShadow: '0 10px 30px -18px rgba(20,40,32,0.5)',
             ...anim(),
           }}
         >
-          <div style={{ fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', color: ACCENT, fontWeight: 600, marginBottom: 14 }}>
-            Latest · {longDate(latest.created_at)}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'center', marginBottom: latest.scores.stress != null ? 16 : 4 }}>
-            {latest.scores.recovery != null && (
-              <Ring
-                value={latest.scores.recovery}
-                display={String(latest.scores.recovery)}
-                color={recoveryColor(latest.scores.recovery)}
-                label="Recovery"
-                delta={delta(latest.scores.recovery, prev?.scores.recovery)}
-                deltaColor={(() => { const d = delta(latest.scores.recovery, prev?.scores.recovery); return d == null ? MUTED : d > 0 ? GREEN : RED })()}
-              />
-            )}
-            {latest.scores.sleep != null && (
-              <Ring
-                value={latest.scores.sleep}
-                display={String(latest.scores.sleep)}
-                color={sleepColor(latest.scores.sleep)}
-                label="Sleep"
-                delta={delta(latest.scores.sleep, prev?.scores.sleep)}
-                deltaColor={(() => { const d = delta(latest.scores.sleep, prev?.scores.sleep); return d == null ? MUTED : d > 0 ? GREEN : RED })()}
-              />
-            )}
-            {latest.scores.strain != null && (
-              <Ring
-                value={latest.scores.strain}
-                display={String(latest.scores.strain)}
-                color={STRAIN}
-                label="Strain"
-                delta={delta(latest.scores.strain, prev?.scores.strain)}
-                deltaColor={MUTED}
-              />
-            )}
-          </div>
-          {latest.scores.stress != null && (
-            <div style={{ textAlign: 'center', marginBottom: 4 }}>
-              <StressPill level={latest.scores.stress} />
+          {/* Dark scores panel */}
+          <div style={{ background: 'radial-gradient(130% 150% at 50% -10%, #21342c 0%, #121c17 72%)', padding: '24px 22px 26px' }}>
+            <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#80d6b7', fontWeight: 600, marginBottom: 18, textAlign: 'center' }}>
+              Latest · {longDate(latest.created_at)}
             </div>
-          )}
-          <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: 14, paddingTop: 2 }}>{renderAnalysis(latest.analysis)}</div>
-          <ShareRow id={latest.id} />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, justifyContent: 'center', marginBottom: latest.scores.stress != null ? 20 : 2 }}>
+              {latest.scores.recovery != null && (
+                <Ring
+                  value={latest.scores.recovery}
+                  color={recoveryColor(latest.scores.recovery)}
+                  label="Recovery"
+                  delta={delta(latest.scores.recovery, prev?.scores.recovery)}
+                  deltaColor={(() => { const d = delta(latest.scores.recovery, prev?.scores.recovery); return d == null ? '#aeb6ae' : d > 0 ? '#4ade80' : '#f87171' })()}
+                  dark
+                />
+              )}
+              {latest.scores.sleep != null && (
+                <Ring
+                  value={latest.scores.sleep}
+                  color={sleepColor(latest.scores.sleep)}
+                  label="Sleep"
+                  delta={delta(latest.scores.sleep, prev?.scores.sleep)}
+                  deltaColor={(() => { const d = delta(latest.scores.sleep, prev?.scores.sleep); return d == null ? '#aeb6ae' : d > 0 ? '#4ade80' : '#f87171' })()}
+                  dark
+                />
+              )}
+              {latest.scores.strain != null && (
+                <Ring
+                  value={latest.scores.strain}
+                  color="#7fb8cc"
+                  label="Strain"
+                  delta={delta(latest.scores.strain, prev?.scores.strain)}
+                  deltaColor="#aeb6ae"
+                  dark
+                />
+              )}
+            </div>
+            {latest.scores.stress != null && (
+              <div style={{ textAlign: 'center' }}>
+                <StressPill level={latest.scores.stress} dark />
+              </div>
+            )}
+          </div>
+          {/* Light analysis body */}
+          <div style={{ padding: '18px 22px 22px' }}>
+            {renderAnalysis(latest.analysis)}
+            <ShareRow id={latest.id} />
+          </div>
         </section>
       )}
 
