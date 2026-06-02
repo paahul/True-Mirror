@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeHealth } from '@/lib/claude'
 import { getUserByToken, saveReport } from '@/lib/supabase'
+import { normalizeFlatMetrics } from '@/lib/normalize'
 import type { AnalyzeRequest } from '@/lib/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://truemirror.paahulhq.com'
@@ -18,8 +19,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  if (!body?.health) {
-    return NextResponse.json({ error: 'health field is required' }, { status: 400 })
+  // Accept either a flat `metrics` bag (from the Shortcut) or a nested `health` payload.
+  const health = body?.metrics ? normalizeFlatMetrics(body.metrics) : body?.health
+  if (!health) {
+    return NextResponse.json({ error: 'metrics or health field is required' }, { status: 400 })
   }
 
   try {
@@ -28,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { save_history = true, health } = body
+    const { save_history = true } = body
     const analysis = await analyzeHealth(health, user.name)
 
     let reportId: string | null = null

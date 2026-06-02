@@ -114,7 +114,10 @@ export interface HealthPayload {
 
 export interface AnalyzeRequest {
   save_history?: boolean
-  health: HealthPayload
+  // Either a fully-formed nested payload (back-compat / tests)…
+  health?: HealthPayload
+  // …or a flat bag of metrics from the Shortcut, normalized server-side.
+  metrics?: Record<string, unknown>
 }
 
 export interface AnalyzeResponse {

@@ -68,11 +68,12 @@ function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof com
 
   lines.push(`Period: last ${health.period_days ?? 30} days`)
 
-  if (health.steps) {
+  if (health.steps && typeof health.steps.average === 'number') {
     const trend = health.steps.daily
       ? detectTrend(health.steps.daily, (d) => d.count)
       : null
-    lines.push(`Steps: avg ${health.steps.average.toLocaleString()}/day, total ${health.steps.total.toLocaleString()}${trend ? ` (${trend})` : ''}`)
+    const total = typeof health.steps.total === 'number' ? `, total ${health.steps.total.toLocaleString()}` : ''
+    lines.push(`Steps: avg ${health.steps.average.toLocaleString()}/day${total}${trend ? ` (${trend})` : ''}`)
   }
 
   if (health.sleep) {
