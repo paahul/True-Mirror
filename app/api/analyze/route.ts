@@ -19,10 +19,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Accept either a flat `metrics` bag (from the Shortcut) or a nested `health` payload.
-  const health = body?.metrics ? normalizeFlatMetrics(body.metrics) : body?.health
+  // Accept any of: a nested `health` payload (tests/back-compat), a flat `metrics`
+  // bag, or flat metric keys at the top level of the body (simplest for the Shortcut).
+  let health = body?.health
   if (!health) {
-    return NextResponse.json({ error: 'metrics or health field is required' }, { status: 400 })
+    const bag =
+      (body?.metrics as Record<string, unknown>) ??
+      (body as Record<string, unknown> | undefined) ??
+      {}
+    health = normalizeFlatMetrics(bag)
+    // require at least one real metric beyond the default period_days
+    if (Object.keys(health).length <= 1) {
+      return NextResponse.json({ error: 'no usable metrics provided' }, { status: 400 })
+    }
   }
 
   try {
