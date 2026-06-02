@@ -9,20 +9,21 @@ iOS Shortcuts reads Apple Health + Fitness data from HealthKit, POSTs it to a Ne
 ## Milestones (current priority order)
 
 1. ✅ **Backend** — deployed to truemirror.paahulhq.com, verified end-to-end
-2. ⏳ **iOS Shortcut (full metric capture, manual token)** — MVP works on Paahul's
-   iPhone (steps/RHR/energy/exercise → analysis). Now: capture all metrics via
-   `docs/shortcut-enrichment-build.md`. **No registration flow yet.** Architecture decided
-   2026-06-01 → **fat Shortcut** (iOS won't serialize raw sample arrays; see
-   `docs/architecture-thin-shortcut.md`).
+2. 🟢 **iOS Shortcut (full metric capture, manual token)** — working on Paahul's iPhone with
+   steps, RHR, energy, exercise, HRV (avg + recent), VO2, respiratory, SpO2, weight → real
+   Recovery/Strain/Stress scores. **Only sleep remains** (the fiddly one) to unlock the Sleep
+   score; workouts skipped (Strain already computes). Sends a flat JSON body; **no registration
+   flow yet.** Architecture: **fat Shortcut** (`docs/architecture-thin-shortcut.md`).
 3. ✅ **History UI** — `/history` page with trend charts + toggles
-3.5. ⏳ **Harden for missing metrics (BEFORE sharing)** — the Shortcut must emit valid JSON
-   for users missing any metric (no Watch, no logged weight, etc.). Fix: build the body with a
-   **Dictionary action** (skip-empty) instead of the hand-typed Text template, and add
-   null-guards in `lib/claude.ts buildHealthSummary`. Paahul's own build is fine (he has the
-   data); this only blocks broad sharing. Caught 2026-06-02 — see `docs/learnings.md`.
+3.5. ✅ **Harden for missing metrics** (done 2026-06-02) — server now tolerates any subset.
+   The Shortcut sends a flat bag of whatever it has; `lib/normalize.ts` (`normalizeFlatMetrics`)
+   maps it to HealthPayload, coerces string→number (incl. daily arrays), and drops empties, so
+   no-Watch / no-weight users never break. `/api/analyze` accepts flat top-level keys, a
+   `metrics` bag, or nested `health`. Recovery/Stress compute from `hrv_recent` vs `hrv_avg`
+   (no daily loop needed).
 4. ⏳ **Onboard first friend (manual)** — provision one friend by hand (create user,
    hardcode token, share signed iCloud link), validate real-world install + permission
-   friction + whether the analysis lands. See `docs/friend-install-guide.md`. **Blocked by 3.5.**
+   friction + whether the analysis lands. See `docs/friend-install-guide.md`.
 5. ⏳ **Registration flow** — self-serve first-run (name/email/mode → token), one
    shareable link, no per-person DB work. See `docs/shortcut-registration-build.md`.
 6. ⏳ **UI tuning** — polish report + history pages once there's real usage (deferred on purpose).
