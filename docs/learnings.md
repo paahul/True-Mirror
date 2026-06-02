@@ -74,6 +74,28 @@ exists); **must harden before onboarding anyone else.**
 **Meta-lesson:** "works on the builder's device" ≠ "works for the segment." Pressure-test the
 unhappy path (missing data, no Watch) before shipping to others.
 
+## 2026-06-02 — First real friend onboarded; the iOS permission tax is the floor
+**Validated by:** Paahul (ran the full flow on Aditi's phone).
+
+**What happened (the real onboarding flow):** tap link → Add Shortcut → (Add to Home Screen) →
+run → **fails** (health access) → grant access per type (~10 Allow taps) → run → **fails**
+(Allow Sharing Large Amounts of Data not set) → flip that in Settings → Shortcuts → Advanced →
+run → ~20s wait → history page opens with the analysis. End-to-end success for a non-builder.
+
+**The friction, quantified:** ~10 health-permission taps + 1 Settings toggle + up to two
+failed runs before it works. Most of this is the **unavoidable iOS tax** for any HealthKit app.
+
+**Implications:**
+- The registration flow (M5) removes Paahul's per-person token wrangling, but **not** these
+  permission prompts — they're iOS, not us. This friction is roughly the floor for this
+  architecture.
+- Levers we *do* control: (a) front-load the "Large Amounts of Data" toggle in instructions
+  (done in friend-install-guide), (b) **trim metrics** to cut the ~10 prompts (fewer Find
+  Health Samples types = fewer Allows; tradeoff: less analysis context), (c) show an
+  "Analyzing…" indicator for the ~20s wait.
+- UX win shipped same day: the Shortcut now ends by opening the user's `/history` page
+  (latest analysis auto-expanded) → a persistent, app-like home instead of a transient alert.
+
 <!-- Add new entries above this line, newest first. Format:
 ## YYYY-MM-DD — short title
 **Caught by:** who

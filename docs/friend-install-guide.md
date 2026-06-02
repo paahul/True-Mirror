@@ -34,24 +34,30 @@ Keep their token handy.
 
 ## Part B — What your friend does (send them this)
 
-> **Setting up True Mirror — about 2 minutes.** You'll tap "Allow" a bunch on the
-> first run (iOS makes every health app do this — it's one-time, and it's only reading,
-> never changing, your data).
+> **Setting up True Mirror — ~3 minutes, mostly one-time taps.** iOS makes every health app
+> ask permission for each data type — it's only *reading* your data, never changing it. Do the
+> two settings below up front and the run goes smoothly.
 
-1. **Tap the link** I sent → Shortcuts opens → tap **Add Shortcut**.
-2. **One setting first:** open **Settings → Shortcuts → Advanced** and turn ON
-   **"Allow Sharing Large Amounts of Data."** (Lets the Shortcut read your 30-day history.)
-3. **Run the Shortcut** (tap it in the Shortcuts app).
-4. **Health permissions:** iOS will ask to read several data types (steps, heart rate,
-   sleep, HRV, etc.). Tap **Allow** / **Turn On All** for each. (One-time.)
-5. **"Allow … to send health data to truemirror.paahulhq.com?"** → tap **Always Allow**.
-   (This sends only computed summaries to get your analysis — it's the whole point.)
-6. Wait ~10 seconds → your **analysis** appears. Done!
-7. **To run it again anytime:** just tap the Shortcut. (Tip: add it to your Home Screen,
-   or set a **Back Tap** in Settings → Accessibility → Touch → Back Tap to trigger it.)
+*(This is the real flow, verified on a friend's phone 2026-06-02.)*
 
-**See your trends over time:** open the personal link Paahul sends you
-(`truemirror.paahulhq.com/history?token=…`) on any device.
+1. **Tap the link** → **Add Shortcut**.
+2. *(Optional)* Long-press the Shortcut → **Share → Add to Home Screen** for an app-like icon.
+3. **Do this BEFORE running** (or the first run fails): **Settings → Shortcuts → Advanced →**
+   turn ON **"Allow Sharing Large Amounts of Data."**
+4. **Run it.** iOS asks to read each health type — tap **Allow** for each (≈10 prompts;
+   tap **Turn On All** if offered). This is the bulk of the setup, and it's one-time.
+5. **"Allow … to send health data to truemirror.paahulhq.com?"** → **Always Allow**
+   (sends only computed summaries — the whole point).
+6. **Wait ~20 seconds** (Claude is analyzing 30 days) → your **history page opens with your
+   analysis**. Done. Tap the Shortcut (or its Home Screen icon) anytime to refresh.
+
+**Heads-up on the first run:** if you skipped step 3, the first run errors with a
+"large amounts of data" message — just flip that setting and run again. Likewise, if you tapped
+"Don't Allow" on anything, re-run and allow it.
+
+**Your page is your home:** the Shortcut opens `truemirror.paahulhq.com/history?token=…`
+(your private link) — add it to your Home Screen to revisit anytime; it shows trends as you
+run it more.
 
 ---
 
