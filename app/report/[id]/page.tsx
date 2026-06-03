@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getReportById } from '@/lib/supabase'
+import { computeDayOverDay } from '@/lib/dayOverDay'
+import DayOverDayCard from '@/app/components/DayOverDayCard'
 
 export const metadata: Metadata = {
   title: 'True Mirror — Analysis',
@@ -40,6 +42,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const report = await getReportById(id)
   if (!report) notFound()
 
+  const dayOverDay = computeDayOverDay(report.raw_data)
+
   const date = new Date(report.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
@@ -65,6 +69,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           animationDelay: '.06s',
         }}
       >
+        <DayOverDayCard dod={dayOverDay} />
         {renderAnalysis(report.analysis)}
       </article>
 

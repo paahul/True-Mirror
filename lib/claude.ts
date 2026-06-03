@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { HealthPayload } from './types'
 import { computeScores } from './scores'
+import { computeDayOverDay, formatDayOverDayForPrompt } from './dayOverDay'
 
 const client = new Anthropic()
 
@@ -29,7 +30,7 @@ Rules:
 - Be direct. Say what the numbers actually mean.
 - Use the real figures. "Your resting HR of 72 is elevated for your activity level" not "your heart rate could be improved."
 - When trend data is present (marked with ↑ or ↓), lead with the trend.
-- A DAY-OVER-DAY block may appear (the two most recent completed days). Treat it as the acute, "what changed overnight" signal — e.g. "HRV dropped to 38 from 52, back off today" — while the 30-day numbers are the baseline. One day is not a trend: never call a single-day move a pattern, and don't contradict the 30-day read with it.
+- A DAY-OVER-DAY block may appear (the two most recent completed days). These exact numbers are ALSO shown to the user in a separate panel, so do not just recite them — react to them. Use them as the acute "what changed overnight" signal to shape your "Three things to do this week" (e.g. low overnight HRV → "keep today easy"), while the 30-day numbers stay the baseline. One day is not a trend: never call a single-day move a pattern, and don't let it contradict the 30-day read.
 - HRV context: below 30ms poor, 30–50ms average, above 60ms good. Trend matters more than the absolute.
 - VO2 max: below 35 poor, 35–45 average, above 50 good for adults.
 - Sleep duration: under 7h asleep is a deficit.
@@ -53,72 +54,6 @@ function detectTrend<T extends { date: string }>(daily: T[], getValue: (d: T) =>
   return pct > 0 ? `↑ ${pct}% vs earlier` : `↓ ${Math.abs(pct)}% vs earlier`
 }
 
-// --- Day-over-day (acute signal) -------------------------------------------
-// The newest row in every `daily` array is the current, still-accumulating
-// day: the Shortcut queries "last 30 days", which includes today-so-far, and
-// the payload carries no run-timestamp/timezone. So we anchor "today" on the
-// max date IN the array and step back off it, comparing the two most recent
-// COMPLETED days. This makes the diff idempotent across multiple same-day runs
-// and immune to the midnight boundary (an 11:30pm and a 2am run never compare
-// against a half-empty in-progress day). See why.md.
-
-interface DayPair {
-  latest: { date: string; value: number }
-  prior:  { date: string; value: number }
-}
-
-function daysBetween(a: string, b: string): number {
-  const pa = Date.parse(`${a}T00:00:00Z`)
-  const pb = Date.parse(`${b}T00:00:00Z`)
-  if (Number.isNaN(pa) || Number.isNaN(pb)) return Infinity
-  return Math.abs(pb - pa) / 86_400_000
-}
-
-function completedDayPair<T extends { date: string }>(
-  daily: T[] | undefined,
-  getValue: (d: T) => number,
-): DayPair | null {
-  if (!daily || daily.length < 3) return null
-  const sorted    = [...daily].sort((a, b) => a.date.localeCompare(b.date))
-  const completed = sorted.slice(0, -1)              // drop the in-progress latest day
-  const latest    = completed[completed.length - 1]
-  const prior     = completed[completed.length - 2]
-  if (!latest || !prior) return null
-  // Skip across data gaps (e.g. Watch not worn) — only compare adjacent days.
-  if (daysBetween(prior.date, latest.date) > 2) return null
-  const lv = getValue(latest), pv = getValue(prior)
-  if (!Number.isFinite(lv) || !Number.isFinite(pv)) return null
-  return { latest: { date: latest.date, value: lv }, prior: { date: prior.date, value: pv } }
-}
-
-function dayDiffLine(label: string, pair: DayPair | null, unit: string, decimals = 0): string | null {
-  if (!pair) return null
-  const fmt = (n: number) =>
-    decimals > 0 ? n.toFixed(decimals) : Math.round(n).toLocaleString()
-  const d = pair.latest.value - pair.prior.value
-  if (Math.abs(d) < Math.pow(10, -decimals) / 2) {
-    return `${label}: ${fmt(pair.latest.value)}${unit} (flat vs prior day)`
-  }
-  const arrow = d > 0 ? '↑' : '↓'
-  const mag   = decimals > 0 ? Math.abs(d).toFixed(decimals) : Math.round(Math.abs(d)).toLocaleString()
-  return `${label}: ${fmt(pair.latest.value)}${unit} (${arrow}${mag} vs prior day's ${fmt(pair.prior.value)}${unit})`
-}
-
-function buildDayOverDay(health: HealthPayload): string {
-  const lines = [
-    dayDiffLine('HRV',            completedDayPair(health.hrv_ms?.daily,          (d) => d.ms),              ' ms'),
-    dayDiffLine('Sleep',          completedDayPair(health.sleep?.daily,           (d) => d.hours_asleep),    'h', 1),
-    dayDiffLine('Resting HR',     completedDayPair(health.heart_rate?.daily_resting, (d) => d.bpm),          ' bpm'),
-    dayDiffLine('Steps',          completedDayPair(health.steps?.daily,           (d) => d.count),           ''),
-    dayDiffLine('Active energy',  completedDayPair(health.active_energy?.daily,   (d) => d.kcal),            ' kcal'),
-    dayDiffLine('Exercise',       completedDayPair(health.exercise_minutes?.daily,(d) => d.minutes),         ' min'),
-    dayDiffLine('Respiratory rate', completedDayPair(health.respiratory_rate?.daily, (d) => d.breaths_per_min), ' br/min', 1),
-    dayDiffLine('SpO2',           completedDayPair(health.spo2_percent?.daily,    (d) => d.pct),             '%'),
-  ].filter(Boolean)
-  if (lines.length === 0) return ''
-  return ['DAY-OVER-DAY (most recent two completed days — acute signal, not a trend):', ...lines].join('\n')
-}
-
 function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof computeScores>): string {
   const lines: string[] = []
 
@@ -133,7 +68,7 @@ function buildHealthSummary(health: HealthPayload, scores: ReturnType<typeof com
     lines.push('')
   }
 
-  const dayOverDay = buildDayOverDay(health)
+  const dayOverDay = formatDayOverDayForPrompt(computeDayOverDay(health))
   if (dayOverDay) {
     lines.push(dayOverDay)
     lines.push('')

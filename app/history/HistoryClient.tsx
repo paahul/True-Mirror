@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { HistoryResponse, HistoryReport, UserMode } from '@/lib/types'
+import DayOverDayCard from '@/app/components/DayOverDayCard'
 
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -292,7 +293,12 @@ function PastCard({ report }: { report: HistoryReport }) {
           Open ↗
         </a>
       </div>
-      {open && <div style={{ marginTop: 8, borderTop: `1px solid ${BORDER}`, paddingTop: 4 }}>{renderAnalysis(report.analysis)}</div>}
+      {open && (
+        <div style={{ marginTop: 8, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+          <DayOverDayCard dod={report.day_over_day} />
+          {renderAnalysis(report.analysis)}
+        </div>
+      )}
     </div>
   )
 }
@@ -483,6 +489,7 @@ export default function HistoryClient() {
           </div>
           {/* Light analysis body */}
           <div style={{ padding: '18px 22px 22px' }}>
+            <DayOverDayCard dod={latest.day_over_day} />
             {renderAnalysis(latest.analysis)}
             <ShareRow id={latest.id} />
           </div>

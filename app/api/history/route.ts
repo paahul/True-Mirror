@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserByToken, getReportsByUser } from '@/lib/supabase'
 import { computeScores } from '@/lib/scores'
+import { computeDayOverDay } from '@/lib/dayOverDay'
 import type { HistoryResponse } from '@/lib/types'
 
 export async function GET(req: NextRequest) {
@@ -19,12 +20,13 @@ export async function GET(req: NextRequest) {
 
     const payload: HistoryResponse = {
       user: { name: user.name, mode: user.mode, opt_in: user.opt_in },
-      // Scores aren't persisted — recompute them from each report's stored raw_data.
+      // Scores & day-over-day aren't persisted — recompute from each report's stored raw_data.
       reports: reports.map((r) => ({
         id: r.id,
         created_at: r.created_at,
         analysis: r.analysis,
         scores: computeScores(r.raw_data),
+        day_over_day: computeDayOverDay(r.raw_data),
       })),
     }
 

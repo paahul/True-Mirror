@@ -7,6 +7,25 @@ export interface HealthScores {
   stress: 'low' | 'moderate' | 'high' | null
 }
 
+// One metric's change between the two most recent COMPLETED days.
+export interface DayDelta {
+  key: string
+  label: string
+  value: number    // latest completed day's value
+  prior: number    // the day before it
+  delta: number    // value − prior
+  unit: string     // e.g. ' ms', 'h', ' bpm'
+  decimals: number
+  favorable: 'good' | 'bad' | 'neutral'  // is the move in a healthy direction?
+}
+
+export interface DayOverDay {
+  latestDate: string
+  priorDate: string
+  lead: string         // deterministic one-line narrative headline
+  deltas: DayDelta[]   // most significant first
+}
+
 export interface DailySteps {
   date: string
   count: number
@@ -150,6 +169,7 @@ export interface HistoryReport {
   created_at: string
   analysis: string
   scores: HealthScores
+  day_over_day: DayOverDay | null
 }
 
 export interface HistoryResponse {

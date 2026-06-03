@@ -23,6 +23,7 @@ export interface User {
 export interface PublicReport {
   analysis: string
   created_at: string
+  raw_data: HealthPayload
 }
 
 export interface FullReport {
@@ -89,7 +90,7 @@ export async function saveReport(
 export async function getReportById(id: string): Promise<PublicReport | null> {
   const { data } = await supabase
     .from('reports')
-    .select('analysis, created_at')
+    .select('analysis, created_at, raw_data')
     .eq('id', id)
     .single()
 
