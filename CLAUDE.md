@@ -42,20 +42,31 @@ history hero = dark glowing ring gauges + count-up + Δ-vs-last-run, gradient tr
 
 **Done 2026-06-03:** Day-over-day acute signal (M7 fork option **a** — narrative-deepening).
 `lib/dayOverDay.ts` diffs the two most recent **completed** days (anchors "today" on the
-array's max date → idempotent across same-day reruns + midnight, no Shortcut change). Shown
-two ways: fed to Claude as a "react, don't recite" block, and as a distinct **"Since your last
-full day"** card (deterministic readiness-led headline + delta pills) above the narrative on
-`/report/[id]` + `/history`. Recomputed from `raw_data` on read like scores — no DB migration.
+array's max date → idempotent across same-day reruns + midnight). Shown two ways: fed to Claude
+as a "react, don't recite" block, and as a distinct **"Since your last full day"** card
+(deterministic readiness-led headline + delta pills) above the narrative on `/report/[id]` +
+`/history`. Recomputed from `raw_data` on read like scores — no DB migration. Also added
+`resp_daily`/`spo2_daily` support to `lib/normalize.ts` (was missing).
+
+> ⚠️ **DATA-DEPENDENT — currently dark on real data.** The production FAT Shortcut sends
+> averages only (**no daily loop**), so `computeDayOverDay` returns null → card hidden, and the
+> 30-day trend arrows are dark too. **Decision (2026-06-03): add full 30-day daily arrays to the
+> Shortcut.** Server is ready; this is Shortcut-side work — see `docs/shortcut-enrichment-build.md`
+> "Daily arrays (Pattern D)" for the exact flat `*_daily` keys. Quick check: `GET /api/history`
+> → `day_over_day` is `null` until arrays arrive.
 
 **What's next (if/when resumed — currently paused):**
-1. **Sleep** metric → unlock the Sleep score (completes the four-score set).
-2. **Per-mode prompts + data-gap detection** — narrative-deepening (the moat).
-3. **Charts — M7 fork (b) still open:** Whoop-style dashboard (rings/curves — re-opens the
+1. **Shortcut: add 30-day daily arrays** (`hrv_daily`, `rhr_daily`, `sleep_daily`, `steps_daily`,
+   `energy_daily`, `exercise_daily`, `resp_daily`, `spo2_daily`) → lights up day-over-day card +
+   trend arrows. Mind the Group-by-Day crash rule + Watch source filter.
+2. **Sleep** metric → unlock the Sleep score (completes the four-score set).
+3. **Per-mode prompts + data-gap detection** — narrative-deepening (the moat).
+4. **Charts — M7 fork (b) still open:** Whoop-style dashboard (rings/curves — re-opens the
    per-day Repeat loops). We're free, not competing with paid sensor apps, so the narrative is
    the moat; only do (b) if there's real pull. If so, likely a **separate "daily snapshot"
    Shortcut** to keep the core one lean. (Option (a) shipped — see Done 2026-06-03 above.)
-4. **Email reminders (M8)** · **dynamic source-filter research (M9)** — deferred.
-5. **Registration flow (M5) — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
+5. **Email reminders (M8)** · **dynamic source-filter research (M9)** — deferred.
+6. **Registration flow (M5) — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
 
 See `plan.md` "Milestones" for the full ordering.
 

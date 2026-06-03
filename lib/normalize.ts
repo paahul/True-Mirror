@@ -5,6 +5,8 @@ import type {
   DailyHRV,
   DailyEnergy,
   DailyExercise,
+  DailyRespiratoryRate,
+  DailySpO2,
   DailySleep,
   Workout,
 } from './types'
@@ -87,10 +89,18 @@ export function normalizeFlatMetrics(m: FlatMetrics): HealthPayload {
   if (vo2 !== undefined) health.vo2_max_ml_kg_min = vo2
 
   const resp = num(m.resp_avg)
-  if (resp !== undefined) health.respiratory_rate = { avg_breaths_per_min: resp }
+  const respDaily = dailyArr(m.resp_daily, 'breaths_per_min')
+  if (resp !== undefined) {
+    health.respiratory_rate = { avg_breaths_per_min: resp }
+    if (respDaily) health.respiratory_rate.daily = respDaily as DailyRespiratoryRate[]
+  }
 
   const spo2 = num(m.spo2_avg)
-  if (spo2 !== undefined) health.spo2_percent = { average: spo2 }
+  const spo2Daily = dailyArr(m.spo2_daily, 'pct')
+  if (spo2 !== undefined) {
+    health.spo2_percent = { average: spo2 }
+    if (spo2Daily) health.spo2_percent.daily = spo2Daily as DailySpO2[]
+  }
 
   // Active energy
   const energyAvg = num(m.energy_avg)

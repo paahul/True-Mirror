@@ -128,9 +128,15 @@ Approx daily average = count of samples ÷ 30. Use Calculate Statistics **Count*
 
 ---
 
-## Daily arrays (Pattern D — unlocks trends + Recovery)
+## Daily arrays (Pattern D — unlocks trends, Recovery, AND day-over-day)
 
-This is what powers the history charts and the Recovery score. Build it for **HRV first** (required), then optionally steps / sleep hours / resting HR.
+This is what powers the history charts, the Recovery score, **and the "Since your last
+full day" day-over-day card** (added 2026-06-03). Without daily arrays, both the 30-day ↑/↓
+trend arrows and the day-over-day card stay hidden — the server has nothing per-day to diff.
+
+Build it for **HRV first** (required), then add the rest. For the **day-over-day card** you
+want the readiness metrics especially: **HRV, resting HR, sleep, respiratory rate, SpO2**
+(steps/energy/exercise show too but fill out the pills rather than drive the headline).
 
 For one metric (e.g., HRV):
 1. **Find Health Samples** → Heart Rate Variability → last 30 Days → **Group By: Day**
@@ -147,18 +153,44 @@ For one metric (e.g., HRV):
 
 **Value keys per metric's daily entry:**
 
-| Metric | daily entry shape |
-|---|---|
-| steps | `{ "date": …, "count": … }` (Sum per day) |
-| sleep | `{ "date": …, "hours_asleep": … }` |
-| resting HR | `{ "date": …, "bpm": … }` (Average per day) |
-| HRV | `{ "date": …, "ms": … }` (Average per day) |
-| active energy | `{ "date": …, "kcal": … }` (Sum per day) |
-| exercise | `{ "date": …, "minutes": … }` (Sum per day) |
+| Metric | daily entry shape | per-day stat |
+|---|---|---|
+| steps | `{ "date": …, "count": … }` | Sum |
+| sleep | `{ "date": …, "hours_asleep": … }` | Sum (hours asleep) |
+| resting HR | `{ "date": …, "bpm": … }` | Average |
+| HRV | `{ "date": …, "ms": … }` | Average |
+| active energy | `{ "date": …, "kcal": … }` | Sum |
+| exercise | `{ "date": …, "minutes": … }` | Sum |
+| respiratory rate | `{ "date": …, "breaths_per_min": … }` | Average |
+| SpO2 | `{ "date": …, "pct": … }` | Average |
 
-> The Repeat + Dictionary + Add-to-Variable loop is the most error-prone part.
-> Build it for HRV, run it, and **Quick Look the `HRVDaily` variable** to confirm
-> the array looks right before wiring more metrics.
+**Flat-key contract (your current Shortcut sends a FLAT body).** Add each finished array as
+a top-level key — the server (`lib/normalize.ts`) maps these into the nested shape:
+
+| Flat key | value | example item |
+|---|---|---|
+| `hrv_daily` | HRVDaily | `{ "date": "2026-06-02", "ms": 41 }` |
+| `rhr_daily` | RHRDaily | `{ "date": "2026-06-02", "bpm": 58 }` |
+| `sleep_daily` | SleepDaily | `{ "date": "2026-06-02", "hours_asleep": 7.1 }` |
+| `steps_daily` | StepsDaily | `{ "date": "2026-06-02", "count": 8210 }` |
+| `energy_daily` | EnergyDaily | `{ "date": "2026-06-02", "kcal": 540 }` |
+| `exercise_daily` | ExDaily | `{ "date": "2026-06-02", "minutes": 32 }` |
+| `resp_daily` | RespDaily | `{ "date": "2026-06-02", "breaths_per_min": 15.2 }` |
+| `spo2_daily` | SpO2Daily | `{ "date": "2026-06-02", "pct": 97 }` |
+
+> **Crash discipline (from `learnings.md`):** every 30-day Find that feeds a daily loop MUST
+> have **Group By: Day** — dense metrics (esp. Active Energy) crash the Shortcut otherwise.
+> For Watch users, keep the **Source filter → your Watch** on steps/energy/exercise so the
+> per-day Sums aren't ~2× double-counted.
+>
+> The Repeat + Dictionary + Add-to-Variable loop is the most error-prone part. Build it for
+> HRV, run it, and **Quick Look the `HRVDaily` variable** to confirm the array looks right
+> before wiring more metrics.
+>
+> **Day boundary:** the server treats the newest day in each array as the still-in-progress
+> day and compares the two most recent *completed* days — so you don't need to exclude
+> "today" yourself, and running the Shortcut twice in a day (or across midnight) stays
+> consistent. Just send whatever the 30-day window returns.
 
 ---
 
@@ -178,8 +210,8 @@ haven't built yet — every field is optional.
     "heart_rate": { "resting_average": ‹RHRAvg›, "daily_resting": ‹RHRDaily› },
     "hrv_ms": { "average": ‹HRVAvg›, "daily": ‹HRVDaily› },
     "vo2_max_ml_kg_min": ‹VO2›,
-    "respiratory_rate": { "avg_breaths_per_min": ‹RespAvg› },
-    "spo2_percent": { "average": ‹SpO2Avg› },
+    "respiratory_rate": { "avg_breaths_per_min": ‹RespAvg›, "daily": ‹RespDaily› },
+    "spo2_percent": { "average": ‹SpO2Avg›, "daily": ‹SpO2Daily› },
     "active_energy": { "average": ‹EnergyAvg›, "daily": ‹EnergyDaily› },
     "exercise_minutes": { "average": ‹ExAvg›, "daily": ‹ExDaily› },
     "workouts": ‹WorkoutsList›,
@@ -208,4 +240,8 @@ Build incrementally: add a metric, Quick Look the Text, confirm valid JSON, run.
 
 After a run, open `https://truemirror.paahulhq.com/history?token=‹yourtoken›` — the new
 report should show Recovery + Sleep chips (once HRV + sleep are flowing) and, with daily
-arrays, the trend charts will populate across runs.
+arrays, the trend charts populate across runs **and the "Since your last full day" card
+appears above the analysis** (it needs ≥3 days in at least one daily array).
+
+Quick check without re-running the Shortcut: `GET /api/history?token=…` returns a
+`day_over_day` field per report — if it's `null`, no daily arrays reached the server yet.
