@@ -34,12 +34,16 @@ Authoritative guide: `docs/build-your-own.md`.
    report pages: history hero with a **dark glowing ring-gauge panel** (count-up numbers,
    Δ-vs-last-run), gradient trend charts, polished report page. Stayed in the "polish what we
    have" lane — not the Whoop dashboard (that's M7).
-7. ⏸️ **Richer "Whoop-style" charts — DECISION FORK (deferred).** Abhishek asked for Whoop-style
+7. 🟡 **Richer "Whoop-style" charts — DECISION FORK.** Abhishek asked for Whoop-style
    visuals. Before building, decide the direction — they're genuinely different products:
 
-   - **(a) Deepen the narrative** *(on-brand):* capture light **day-over-day** data so Claude's
-     read gets sharper ("recovery down 12 vs yesterday — back off today"). Day-granularity in
-     service of the honest analysis, not a dashboard. Plus polish the existing trend charts.
+   - ✅ **(a) Deepen the narrative** *(on-brand — SHIPPED 2026-06-03):* day-over-day signal now
+     surfaced. The two most recent **completed** days are diffed server-side (`lib/dayOverDay.ts`),
+     fed to Claude as an acute "react, don't recite" block, AND rendered as a distinct
+     **"Since your last full day"** card (deterministic readiness-led headline + delta pills) above
+     the narrative on `/report/[id]` + `/history`. No Shortcut change needed (the daily arrays
+     already arrive); idempotent across same-day reruns + the midnight boundary. Recomputed from
+     `raw_data` on read like scores — no DB migration. (b) below still open.
    - **(b) Whoop-style dashboard** *(off the moat):* recovery rings, strain curves, sleep-stage
      bars. Needs rich per-day capture (sleep stages, daily arrays) — which means the Group-by-Day
      **Repeat loops** we deliberately removed.

@@ -40,13 +40,20 @@ Critical build rules (from real failures, see `docs/learnings.md`):
 **Done 2026-06-02:** UI polish (M6) — brand-cohesive redesign across landing/history/report;
 history hero = dark glowing ring gauges + count-up + Δ-vs-last-run, gradient trend charts.
 
+**Done 2026-06-03:** Day-over-day acute signal (M7 fork option **a** — narrative-deepening).
+`lib/dayOverDay.ts` diffs the two most recent **completed** days (anchors "today" on the
+array's max date → idempotent across same-day reruns + midnight, no Shortcut change). Shown
+two ways: fed to Claude as a "react, don't recite" block, and as a distinct **"Since your last
+full day"** card (deterministic readiness-led headline + delta pills) above the narrative on
+`/report/[id]` + `/history`. Recomputed from `raw_data` on read like scores — no DB migration.
+
 **What's next (if/when resumed — currently paused):**
 1. **Sleep** metric → unlock the Sleep score (completes the four-score set).
 2. **Per-mode prompts + data-gap detection** — narrative-deepening (the moat).
-3. **Charts — DECISION FORK (plan.md M7):** (a) deepen the narrative with light day-over-day
-   capture (on-brand) vs (b) Whoop-style dashboard (rings/curves — re-opens the per-day Repeat
-   loops). We're free, not competing with paid sensor apps, so the narrative is the moat. If (b),
-   likely a **separate "daily snapshot" Shortcut** to keep the core one lean. Default lean: (a).
+3. **Charts — M7 fork (b) still open:** Whoop-style dashboard (rings/curves — re-opens the
+   per-day Repeat loops). We're free, not competing with paid sensor apps, so the narrative is
+   the moat; only do (b) if there's real pull. If so, likely a **separate "daily snapshot"
+   Shortcut** to keep the core one lean. (Option (a) shipped — see Done 2026-06-03 above.)
 4. **Email reminders (M8)** · **dynamic source-filter research (M9)** — deferred.
 5. **Registration flow (M5) — DROPPED** (`docs/shortcut-registration-build.md` is reference only).
 

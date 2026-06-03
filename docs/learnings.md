@@ -5,6 +5,27 @@ so the reasoning isn't lost and good catches are credited. Newest first.
 
 ---
 
+## 2026-06-03 — Day-over-day must anchor on completed days, not "the latest row"
+**Caught by:** Paahul.
+
+**The catch:** the first cut of the day-over-day diff compared the newest daily-array row
+against the prior one. Paahul asked the right unhappy-path question: *what if I run it twice
+in a day, or at 11:30pm then 2am?* The Shortcut queries "last 30 days" (which includes
+today-so-far) and the payload has no run-timestamp/timezone, so the newest row is the
+**still-accumulating current day**. Naively diffing it makes same-day reruns non-idempotent
+(today's partial total grows between runs) and produces midnight-boundary nonsense
+("slept 0h, steps ↓99%" at 2am, when the newest row flips to a ~empty new day).
+
+**Decision:** anchor "today" on the **max date in the array itself** (timezone-free) and step
+back off it — always diff the two most recent **completed** days. Every run within a calendar
+day is then byte-identical; crossing midnight cleanly advances the window by one day. No
+Shortcut change required (the daily arrays already arrive).
+
+**Meta-lesson:** for anything keyed on "now," the partial current period is the default trap.
+Diff complete periods, and derive the period boundary from the data, not the clock.
+
+---
+
 ## 2026-06-01 — Client-side aggregation in the Shortcut bought us nothing
 **Caught by:** Paahul (the builder).
 
