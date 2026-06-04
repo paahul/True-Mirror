@@ -278,7 +278,7 @@ function PastCard({ report }: { report: HistoryReport }) {
       {open && (
         <div style={{ marginTop: 8, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
           <DayOverDayCard dod={report.day_over_day} />
-          <Analysis text={report.analysis} size="sm" />
+          <Analysis text={report.analysis} metrics={report.metrics} size="sm" />
         </div>
       )}
     </div>
@@ -473,7 +473,7 @@ export default function HistoryClient() {
           <div style={{ padding: '18px 22px 22px' }}>
             <VerdictLine text={buildVerdict(latest.scores)} />
             <DayOverDayCard dod={latest.day_over_day} />
-            <Analysis text={latest.analysis} />
+            <Analysis text={latest.analysis} metrics={latest.metrics} />
             <ShareRow id={latest.id} />
           </div>
         </section>

@@ -39,6 +39,7 @@ Rules:
 - SpO2: 95–100% normal; 90–95% worth monitoring; below 90% flag clearly.
 - Keep it under 450 words total.
 - No nested bullet points — short punchy sentences only.
+- In "What's working" and "What needs attention", begin each line with a metric tag in double brackets naming the single most relevant metric, from EXACTLY this list: recovery, sleep, hrv, resting_hr, strain, stress, steps, active_energy, exercise, respiratory_rate, spo2, vo2, weight, none. Example: "[[resting_hr]] Your resting HR has crept up to 76." Use [[none]] when no single metric fits. (Do NOT tag the "Three things to do this week" actions.)
 - Do not add a preamble or sign-off.`
 
 function detectTrend<T extends { date: string }>(daily: T[], getValue: (d: T) => number): string | null {

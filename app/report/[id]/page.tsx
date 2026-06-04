@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getReportById } from '@/lib/supabase'
 import { computeDayOverDay } from '@/lib/dayOverDay'
 import { computeScores } from '@/lib/scores'
+import { computeMetricSnapshot } from '@/lib/metricSnapshot'
 import { buildVerdict } from '@/lib/verdict'
 import DayOverDayCard from '@/app/components/DayOverDayCard'
 import Analysis, { VerdictLine } from '@/app/components/Analysis'
@@ -26,7 +27,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   if (!report) notFound()
 
   const dayOverDay = computeDayOverDay(report.raw_data)
-  const verdict = buildVerdict(computeScores(report.raw_data))
+  const scores = computeScores(report.raw_data)
+  const verdict = buildVerdict(scores)
+  const metrics = computeMetricSnapshot(report.raw_data, scores, dayOverDay)
 
   const date = new Date(report.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -55,7 +58,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       >
         <VerdictLine text={verdict} size="lg" />
         <DayOverDayCard dod={dayOverDay} />
-        <Analysis text={report.analysis} size="lg" />
+        <Analysis text={report.analysis} metrics={metrics} size="lg" />
       </article>
 
       <div

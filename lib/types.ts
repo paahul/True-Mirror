@@ -26,6 +26,17 @@ export interface DayOverDay {
   deltas: DayDelta[]   // most significant first
 }
 
+// A live value for one metric, attached next to a narrative bullet that Claude
+// tagged with that metric's key (see the [[metric]] tags in the prompt).
+export interface MetricChip {
+  label: string
+  value: string                          // formatted, e.g. "58 bpm", "67/100"
+  delta?: string                         // optional day-over-day, e.g. "↓14"
+  favorable?: 'good' | 'bad' | 'neutral' // colours the delta
+}
+
+export type MetricSnapshot = Record<string, MetricChip>
+
 export interface DailySteps {
   date: string
   count: number
@@ -170,6 +181,7 @@ export interface HistoryReport {
   analysis: string
   scores: HealthScores
   day_over_day: DayOverDay | null
+  metrics: MetricSnapshot
 }
 
 export interface HistoryResponse {

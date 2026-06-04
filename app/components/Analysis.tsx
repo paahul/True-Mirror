@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { MetricSnapshot, MetricChip } from '@/lib/types'
 
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const INK = '#1a1a18'
@@ -9,8 +10,11 @@ const BORDER = '#e7e2d8'
 const PILL_BG = '#f6f3ec'
 const C_GOOD = '#1f8a5b'
 const C_WARN = '#b9791c'
+const C_BAD = '#e5484d'
 const WARN_BG = '#fcf5e8'
 const WARN_BORDER = '#ecdcc0'
+const GOOD_BG = '#eef6f0'
+const GOOD_BORDER = '#cfe6d6'
 
 type Kind = 'good' | 'warn' | 'actions' | 'list'
 
@@ -54,6 +58,25 @@ function stripMarker(line: string): string {
   return line.replace(/^\s*(?:\d+[.)]|[-•*])\s+/, '').trim()
 }
 
+// Pull a leading [[metric]] tag, if present (old reports have none → text unchanged).
+function extractTag(line: string): { tag: string | null; text: string } {
+  const m = line.match(/^\[\[(\w+)\]\]\s*/)
+  return m ? { tag: m[1], text: line.slice(m[0].length) } : { tag: null, text: line }
+}
+
+function ChipView({ chip }: { chip: MetricChip }) {
+  const dc = chip.favorable === 'good' ? C_GOOD : chip.favorable === 'bad' ? C_BAD : MUTED
+  return (
+    <span
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 16, marginTop: 4, fontSize: 11.5, color: '#5c574e', background: '#fffdf9', border: `1px solid ${BORDER}`, borderRadius: 999, padding: '2px 9px' }}
+    >
+      <strong style={{ fontWeight: 600, color: INK }}>{chip.label}</strong>
+      <span>{chip.value}</span>
+      {chip.delta && <span style={{ color: dc, fontWeight: 700 }}>{chip.delta}</span>}
+    </span>
+  )
+}
+
 // Inline **bold** within a line.
 function inline(line: string, keyBase: string): ReactNode[] {
   return line.split(/\*\*(.*?)\*\*/).map((part, j) =>
@@ -92,7 +115,15 @@ export function VerdictLine({ text, size = 'md' }: { text: string | null; size?:
   )
 }
 
-export default function Analysis({ text, size = 'md' }: { text: string; size?: keyof typeof SIZES }) {
+export default function Analysis({
+  text,
+  metrics,
+  size = 'md',
+}: {
+  text: string
+  metrics?: MetricSnapshot
+  size?: keyof typeof SIZES
+}) {
   const { preamble, sections } = parse(text)
   const s = SIZES[size]
 
@@ -112,12 +143,19 @@ export default function Analysis({ text, size = 'md' }: { text: string; size?: k
             <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
           </div>
         )
-        const bullets = sec.body.map((line, j) => (
-          <p key={`p-${i}-${j}`} style={{ display: 'flex', gap: 8, margin: '5px 0', lineHeight: 1.55, fontSize: s.body, color: BODY }}>
-            <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
-            <span>{inline(stripMarker(line), `p-${i}-${j}`)}</span>
-          </p>
-        ))
+        const bullets = sec.body.map((line, j) => {
+          const { tag, text: body } = extractTag(stripMarker(line))
+          const chip = tag && metrics ? metrics[tag] : undefined
+          return (
+            <div key={`p-${i}-${j}`} style={{ margin: '6px 0' }}>
+              <p style={{ display: 'flex', gap: 8, margin: 0, lineHeight: 1.55, fontSize: s.body, color: BODY }}>
+                <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
+                <span>{inline(body, `p-${i}-${j}`)}</span>
+              </p>
+              {chip && <ChipView chip={chip} />}
+            </div>
+          )
+        })
 
         // "Three things to do this week" → numbered action cards.
         if (sec.kind === 'actions') {
@@ -143,13 +181,15 @@ export default function Analysis({ text, size = 'md' }: { text: string; size?: k
           )
         }
 
-        // "What needs attention" → amber callout card, so the priority block stands out.
-        if (sec.kind === 'warn') {
+        // "What's working" (green) and "What needs attention" (amber) → tinted
+        // callout cards, so the two read as distinct zones rather than one list.
+        if (sec.kind === 'good' || sec.kind === 'warn') {
+          const card =
+            sec.kind === 'good'
+              ? { background: GOOD_BG, border: `1px solid ${GOOD_BORDER}`, borderLeft: `3px solid ${C_GOOD}` }
+              : { background: WARN_BG, border: `1px solid ${WARN_BORDER}`, borderLeft: `3px solid ${C_WARN}` }
           return (
-            <section
-              key={`sec-${i}`}
-              style={{ marginTop: i === 0 ? 4 : 22, background: WARN_BG, border: `1px solid ${WARN_BORDER}`, borderLeft: `3px solid ${C_WARN}`, borderRadius: 12, padding: '13px 15px 14px' }}
-            >
+            <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 18, borderRadius: 12, padding: '13px 15px 14px', ...card }}>
               {header}
               {bullets}
             </section>
