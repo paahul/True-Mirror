@@ -195,22 +195,31 @@ export default function Home() {
 
       {/* What you get */}
       <Section kicker="What you get" title="A read you can act on">
-        <div
-          style={{
-            background: '#f7f4ee',
-            border: `1px solid ${BORDER}`,
-            borderRadius: 16,
-            padding: '20px 20px 22px',
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <span style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>Sample analysis</span>
-            <span style={{ fontSize: 12, color: MUTED }}>3 June</span>
+        <div style={{ position: 'relative', marginBottom: 28 }}>
+          {/* Faux stack behind, so it reads as a swipeable card deck */}
+          <div aria-hidden style={{ position: 'absolute', left: 18, right: 18, bottom: -15, height: 30, background: '#efeae0', border: `1px solid ${BORDER}`, borderRadius: 14, zIndex: 0 }} />
+          <div aria-hidden style={{ position: 'absolute', left: 9, right: 9, bottom: -7, height: 30, background: '#f2eee5', border: `1px solid ${BORDER}`, borderRadius: 14, zIndex: 1 }} />
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 2,
+              background: '#f7f4ee',
+              border: `1px solid ${BORDER}`,
+              borderRadius: 16,
+              padding: '20px 20px 22px',
+              boxShadow: '0 18px 40px -22px rgba(20,40,32,0.55)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>Sample analysis</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: ACCENT, fontWeight: 600 }}>
+                swipe <span style={{ fontSize: 15 }}>›</span>
+              </span>
+            </div>
+            <VerdictLine text={SAMPLE_VERDICT} />
+            <DayOverDayCard dod={SAMPLE_DOD} />
+            <Analysis text={SAMPLE_ANALYSIS} metrics={SAMPLE_METRICS} />
           </div>
-          <VerdictLine text={SAMPLE_VERDICT} />
-          <DayOverDayCard dod={SAMPLE_DOD} />
-          <Analysis text={SAMPLE_ANALYSIS} metrics={SAMPLE_METRICS} />
         </div>
         <p style={{ color: MUTED, fontSize: 13.5, margin: '0 0 24px' }}>
           In the app this is a card deck — your scores and verdict up front, then you swipe through
