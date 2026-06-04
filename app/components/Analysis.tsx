@@ -9,6 +9,8 @@ const BORDER = '#e7e2d8'
 const PILL_BG = '#f6f3ec'
 const C_GOOD = '#1f8a5b'
 const C_WARN = '#b9791c'
+const WARN_BG = '#fcf5e8'
+const WARN_BORDER = '#ecdcc0'
 
 type Kind = 'good' | 'warn' | 'actions' | 'list'
 
@@ -104,14 +106,24 @@ export default function Analysis({ text, size = 'md' }: { text: string; size?: k
 
       {sections.map((sec, i) => {
         const color = KIND_COLOR[sec.kind]
-        return (
-          <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 22 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Icon kind={sec.kind} color={color} />
-              <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
-            </div>
+        const header = (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <Icon kind={sec.kind} color={color} />
+            <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
+          </div>
+        )
+        const bullets = sec.body.map((line, j) => (
+          <p key={`p-${i}-${j}`} style={{ display: 'flex', gap: 8, margin: '5px 0', lineHeight: 1.55, fontSize: s.body, color: BODY }}>
+            <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
+            <span>{inline(stripMarker(line), `p-${i}-${j}`)}</span>
+          </p>
+        ))
 
-            {sec.kind === 'actions' ? (
+        // "Three things to do this week" → numbered action cards.
+        if (sec.kind === 'actions') {
+          return (
+            <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 22 }}>
+              {header}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {sec.body.map((line, j) => (
                   <div
@@ -127,14 +139,27 @@ export default function Analysis({ text, size = 'md' }: { text: string; size?: k
                   </div>
                 ))}
               </div>
-            ) : (
-              sec.body.map((line, j) => (
-                <p key={`p-${i}-${j}`} style={{ display: 'flex', gap: 8, margin: '5px 0', lineHeight: 1.55, fontSize: s.body, color: BODY }}>
-                  <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
-                  <span>{inline(stripMarker(line), `p-${i}-${j}`)}</span>
-                </p>
-              ))
-            )}
+            </section>
+          )
+        }
+
+        // "What needs attention" → amber callout card, so the priority block stands out.
+        if (sec.kind === 'warn') {
+          return (
+            <section
+              key={`sec-${i}`}
+              style={{ marginTop: i === 0 ? 4 : 22, background: WARN_BG, border: `1px solid ${WARN_BORDER}`, borderLeft: `3px solid ${C_WARN}`, borderRadius: 12, padding: '13px 15px 14px' }}
+            >
+              {header}
+              {bullets}
+            </section>
+          )
+        }
+
+        return (
+          <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 22 }}>
+            {header}
+            {bullets}
           </section>
         )
       })}
