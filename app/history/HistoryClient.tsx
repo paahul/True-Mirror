@@ -22,6 +22,10 @@ const GREEN = '#30a46c'
 const SLEEP_BLUE = '#3b82f6'
 const STRAIN = '#7c8597'
 
+// Trends only make sense once there's enough history to be a trend, not noise.
+// Bump to 30 for a stricter gate.
+const MIN_TREND_SPAN_DAYS = 14
+
 const MODE_LABELS: Record<UserMode, string> = {
   curious: 'Just curious',
   active: 'Building active habits',
@@ -299,6 +303,8 @@ export default function HistoryClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savingSetting, setSavingSetting] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [showEarlier, setShowEarlier] = useState(false)
 
   useEffect(() => {
     if (!token) {
@@ -401,6 +407,11 @@ export default function HistoryClient() {
   const chrono = [...data.reports].reverse()
   const recoveryPts = chrono.filter((r) => r.scores.recovery != null).map((r) => ({ date: r.created_at, value: r.scores.recovery as number }))
   const sleepPts = chrono.filter((r) => r.scores.sleep != null).map((r) => ({ date: r.created_at, value: r.scores.sleep as number }))
+  const spanDays =
+    chrono.length >= 2
+      ? (new Date(chrono[chrono.length - 1].created_at).getTime() - new Date(chrono[0].created_at).getTime()) / 86_400_000
+      : 0
+  const showTrends = spanDays >= MIN_TREND_SPAN_DAYS && (recoveryPts.length >= 2 || sleepPts.length >= 2)
 
   const latest = data.reports[0] ?? null
   const prev = data.reports[1] ?? null
@@ -479,44 +490,80 @@ export default function HistoryClient() {
         </section>
       )}
 
-      {/* Settings */}
-      <section style={{ border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 26, ...anim() }}>
-        <div style={{ fontSize: 13, color: MUTED, marginBottom: 8, fontWeight: 500 }}>How you use your Watch</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
-          {(Object.keys(MODE_LABELS) as UserMode[]).map((m) => {
-            const active = data.user.mode === m
-            return (
-              <button
-                key={m}
-                disabled={savingSetting}
-                onClick={() => !active && updateSetting({ mode: m })}
-                style={{
-                  fontSize: 13,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  border: active ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`,
-                  background: active ? ACCENT : '#fff',
-                  color: active ? '#fff' : '#444',
-                  cursor: active ? 'default' : 'pointer',
-                  transition: 'all .2s ease',
-                }}
-              >
-                {MODE_LABELS[m]}
+      {/* Personalisation — collapsed into an invite by default to keep the page calm */}
+      <section style={{ marginBottom: 26, ...anim() }}>
+        {!showSettings ? (
+          <button
+            onClick={() => setShowSettings(true)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              textAlign: 'left',
+              background: '#f3f8f6',
+              border: `1px solid #d6e7e1`,
+              borderLeft: `3px solid ${ACCENT}`,
+              borderRadius: 12,
+              padding: '14px 16px',
+              cursor: 'pointer',
+            }}
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flex: '0 0 auto' }}>
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="3.2" />
+            </svg>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: INK }}>Tell us how you use your Watch</span>
+              <span style={{ display: 'block', fontSize: 12.5, color: MUTED, marginTop: 1 }}>for even more personalised coaching</span>
+            </span>
+            <span style={{ fontSize: 22, color: ACCENT, lineHeight: 1 }}>›</span>
+          </button>
+        ) : (
+          <div style={{ border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <span style={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>How you use your Watch</span>
+              <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', padding: 0, color: ACCENT, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+                Done
               </button>
-            )
-          })}
-        </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#444', cursor: 'pointer' }}>
-          <input type="checkbox" checked={data.user.opt_in} disabled={savingSetting} onChange={(e) => updateSetting({ opt_in: e.target.checked })} style={{ width: 16, height: 16, accentColor: ACCENT }} />
-          Save my analyses to track trends over time
-        </label>
-        {!data.user.opt_in && (
-          <p style={{ fontSize: 12, color: MUTED, margin: '6px 0 0 26px' }}>History saving is off — new analyses won&rsquo;t be stored.</p>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
+              {(Object.keys(MODE_LABELS) as UserMode[]).map((m) => {
+                const active = data.user.mode === m
+                return (
+                  <button
+                    key={m}
+                    disabled={savingSetting}
+                    onClick={() => !active && updateSetting({ mode: m })}
+                    style={{
+                      fontSize: 13,
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      border: active ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`,
+                      background: active ? ACCENT : '#fff',
+                      color: active ? '#fff' : '#444',
+                      cursor: active ? 'default' : 'pointer',
+                      transition: 'all .2s ease',
+                    }}
+                  >
+                    {MODE_LABELS[m]}
+                  </button>
+                )
+              })}
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#444', cursor: 'pointer' }}>
+              <input type="checkbox" checked={data.user.opt_in} disabled={savingSetting} onChange={(e) => updateSetting({ opt_in: e.target.checked })} style={{ width: 16, height: 16, accentColor: ACCENT }} />
+              Save my analyses to track trends over time
+            </label>
+            {!data.user.opt_in && (
+              <p style={{ fontSize: 12, color: MUTED, margin: '6px 0 0 26px' }}>History saving is off — new analyses won&rsquo;t be stored.</p>
+            )}
+          </div>
         )}
       </section>
 
-      {/* Trends */}
-      {(recoveryPts.length >= 2 || sleepPts.length >= 2) && (
+      {/* Trends — only once there's enough history to be meaningful */}
+      {showTrends && (
         <section style={{ marginBottom: 26, ...anim() }}>
           <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, marginBottom: 14 }}>Trends</h2>
           <ScoreChart title="Recovery" points={recoveryPts} color={GREEN} />
@@ -524,13 +571,29 @@ export default function HistoryClient() {
         </section>
       )}
 
-      {/* Earlier analyses */}
+      {/* Earlier analyses — collapsed by default to keep the page focused on today */}
       {data.reports.length > 1 && (
         <section style={anim()}>
-          <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, marginBottom: 14 }}>Earlier analyses</h2>
-          {data.reports.slice(1).map((r) => (
-            <PastCard key={r.id} report={r} />
-          ))}
+          <button
+            onClick={() => setShowEarlier((o) => !o)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'none',
+              border: 'none',
+              padding: '4px 0',
+              cursor: 'pointer',
+              marginBottom: showEarlier ? 14 : 0,
+            }}
+          >
+            <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, margin: 0 }}>
+              Earlier analyses <span style={{ color: MUTED, fontWeight: 400 }}>({data.reports.length - 1})</span>
+            </h2>
+            <span style={{ fontSize: 18, color: MUTED, transform: showEarlier ? 'rotate(90deg)' : 'none', transition: 'transform .2s ease' }}>›</span>
+          </button>
+          {showEarlier && data.reports.slice(1).map((r) => <PastCard key={r.id} report={r} />)}
         </section>
       )}
 
