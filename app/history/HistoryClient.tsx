@@ -369,11 +369,13 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
       transition: dragging.current && off === 0 ? 'none' : 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s',
       touchAction: 'pan-y',
     }
+    // Behind cards peek via centred scale (stays in bounds, so the fly-out can be
+    // clipped at the deck edge without eating the peek).
     if (off < 0) return { ...base, transform: 'translateX(-130%) rotate(-10deg)', opacity: 0, zIndex: 1, pointerEvents: 'none' }
     if (off === 0) return { ...base, transform: `translateX(${dx}px) rotate(${dx * 0.04}deg)`, zIndex: 30, cursor: 'grab' }
-    if (off === 1) return { ...base, transform: 'translateY(14px) scale(0.955)', opacity: 0.55, zIndex: 20, pointerEvents: 'none' }
-    if (off === 2) return { ...base, transform: 'translateY(28px) scale(0.91)', opacity: 0.3, zIndex: 10, pointerEvents: 'none' }
-    return { ...base, transform: 'translateY(28px) scale(0.91)', opacity: 0, zIndex: 0, pointerEvents: 'none' }
+    if (off === 1) return { ...base, transform: 'scale(0.955)', opacity: 0.6, zIndex: 20, pointerEvents: 'none' }
+    if (off === 2) return { ...base, transform: 'scale(0.91)', opacity: 0.32, zIndex: 10, pointerEvents: 'none' }
+    return { ...base, transform: 'scale(0.91)', opacity: 0, zIndex: 0, pointerEvents: 'none' }
   }
 
   const arrow = (disabled: boolean): React.CSSProperties => ({
@@ -400,8 +402,8 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
         </div>
       </div>
 
-      {/* The stack */}
-      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)' }}>
+      {/* The stack (clips the fly-out at its own edge → no page scroll) */}
+      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)', overflow: 'hidden' }}>
         {sections.map((sec, k) => {
           const off = k - i
           const active = off === 0
@@ -620,13 +622,19 @@ export default function HistoryClient() {
               </div>
             )}
           </div>
-          {/* Light analysis body */}
-          <div style={{ padding: '18px 22px 22px' }}>
+          {/* Light snapshot body — the read's headline, kept with the scores */}
+          <div style={{ padding: '18px 22px 20px' }}>
             <VerdictLine text={buildVerdict(latest.scores)} />
             <DayOverDayCard dod={latest.day_over_day} />
-            <AnalysisDeck text={latest.analysis} metrics={latest.metrics} />
-            <ShareRow id={latest.id} />
           </div>
+        </section>
+      )}
+
+      {/* Analysis — its own section so the swipe cards stand on their own */}
+      {latest && (
+        <section style={{ marginBottom: 26, ...anim() }}>
+          <AnalysisDeck text={latest.analysis} metrics={latest.metrics} />
+          <ShareRow id={latest.id} />
         </section>
       )}
 
