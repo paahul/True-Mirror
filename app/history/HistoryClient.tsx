@@ -729,9 +729,15 @@ export default function HistoryClient() {
       </footer>
 
       {data.reports.length === 0 && (
-        <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.6, ...anim() }}>
-          No analyses yet. Run the Shortcut to get your first one — it&rsquo;ll show up here.
-        </p>
+        <div style={{ ...anim() }}>
+          <p style={{ color: INK, fontSize: 15, lineHeight: 1.6, margin: '0 0 8px', fontWeight: 500 }}>
+            No analyses saved yet.
+          </p>
+          <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+            Run the Shortcut and your first read shows up here. Just ran it and nothing appeared?
+            Your Watch data may be too thin so far — wear it a few days (charged overnight) and run it again.
+          </p>
+        </div>
       )}
     </>,
   )

@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
     health = normalizeFlatMetrics(bag)
     // require at least one real metric beyond the default period_days
     if (Object.keys(health).length <= 1) {
-      return NextResponse.json({ error: 'no usable metrics provided' }, { status: 400 })
+      return NextResponse.json(
+        { error: "Couldn't read enough Apple Health data to analyse. Make sure your Watch has been worn recently, then run the Shortcut again." },
+        { status: 400 },
+      )
     }
   }
 
