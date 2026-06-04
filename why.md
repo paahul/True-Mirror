@@ -63,3 +63,11 @@ This is a small feature in terms of implementation but meaningful in terms of us
 ## Who it's for (v1)
 
 Friends and family. Not the App Store. The distribution model is a Shortcut link and a Vercel URL. At this scale, AI costs are negligible. The opt-in history feature means users who want to track trends over time can, and users who want privacy-first stateless analysis can do that too.
+
+## Why invest in the UI when setup is the hard part (decided 2026-06-04)
+
+The install is the bottleneck, not the capability. Standing it up is non-trivial and error-prone — per-device HealthKit permissions, the "allow large data" toggle, Watch source filters, a fiddly Shortcut to assemble. People won't grind through that for a vague promise.
+
+So the UI is deliberately the **hook**. When adoption friction is the bottleneck, the highest-leverage lever isn't more backend capability — it's **desirability**: making the payoff so obviously worth it that someone decides the hassle is worth enduring. That's why the read is a polished, swipe-through card deck and why the homepage renders the *real* finished experience (verdict, day-over-day, live metric chips). The homepage sells the destination so the friction reads as a price worth paying, not a dealbreaker. This is a demand-side bet, and for a friction-gated tool it's the right one.
+
+**The catch this creates:** the hook writes a check the data has to cash. If the homepage sells day-over-day and live deltas, then someone who pushes through the painful install must actually *get* them — otherwise install pain + under-delivery is worse than no hook at all (churn, bad word of mouth). So selling the finished UI doesn't lower the priority of the supply-side work (e.g. the Shortcut daily-array capture that powers day-over-day, chip deltas, and trends) — it **raises** it. Sequencing rule: polish the demand side freely, but close the promise-vs-delivery gap before driving anyone new through the funnel.
