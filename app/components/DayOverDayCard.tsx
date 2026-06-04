@@ -45,8 +45,28 @@ function Pill({ d }: { d: DayDelta }) {
   )
 }
 
-export default function DayOverDayCard({ dod }: { dod: DayOverDay | null }) {
+// `framed` (default) draws the bordered callout for the linear views. The deck
+// passes framed={false} to render the content bare (the deck card is the frame).
+export default function DayOverDayCard({ dod, framed = true }: { dod: DayOverDay | null; framed?: boolean }) {
   if (!dod || dod.deltas.length === 0) return null
+
+  const inner = (
+    <>
+      <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 6 }}>
+        Since your last full day
+      </div>
+      <p style={{ fontFamily: SERIF, fontSize: framed ? 16 : 18, lineHeight: 1.45, color: INK, margin: '0 0 14px' }}>
+        {dod.lead}
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {dod.deltas.map((d) => (
+          <Pill key={d.key} d={d} />
+        ))}
+      </div>
+    </>
+  )
+
+  if (!framed) return <div>{inner}</div>
 
   return (
     <section
@@ -59,17 +79,7 @@ export default function DayOverDayCard({ dod }: { dod: DayOverDay | null }) {
         background: '#fffdf9',
       }}
     >
-      <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 6 }}>
-        Since your last full day
-      </div>
-      <p style={{ fontFamily: SERIF, fontSize: 16, lineHeight: 1.45, color: INK, margin: '0 0 14px' }}>
-        {dod.lead}
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {dod.deltas.map((d) => (
-          <Pill key={d.key} d={d} />
-        ))}
-      </div>
+      {inner}
     </section>
   )
 }

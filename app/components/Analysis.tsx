@@ -129,18 +129,27 @@ export function AnalysisSection({
   metrics,
   size = 'md',
   framed = true,
+  kicker,
 }: {
   section: Section
   metrics?: MetricSnapshot
   size?: keyof typeof SIZES
   framed?: boolean
+  kicker?: string
 }) {
   const s = SIZES[size]
   const color = KIND_COLOR[sec.kind]
   const header = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-      <Icon kind={sec.kind} color={color} />
-      <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
+    <div style={{ marginBottom: 10 }}>
+      {kicker && (
+        <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color, fontWeight: 700, marginBottom: 6 }}>
+          {kicker}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <Icon kind={sec.kind} color={color} />
+        <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
+      </div>
     </div>
   )
 

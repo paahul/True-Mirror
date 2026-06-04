@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import type { HistoryResponse, HistoryReport, UserMode, MetricSnapshot } from '@/lib/types'
+import type { HistoryResponse, HistoryReport, UserMode } from '@/lib/types'
 import { buildVerdict } from '@/lib/verdict'
 import DayOverDayCard from '@/app/components/DayOverDayCard'
-import Analysis, { VerdictLine, AnalysisSection, parseAnalysis, sectionTint, type Kind } from '@/app/components/Analysis'
+import Analysis, { AnalysisSection, parseAnalysis, sectionTint, type Kind } from '@/app/components/Analysis'
 
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -335,51 +335,95 @@ function ReportDeck({ reports }: { reports: HistoryReport[] }) {
   )
 }
 
-// Stacked swipe deck for the CURRENT analysis: one section card on top, the
-// rest peeking behind. Read it, swipe (or tap ›) to reveal the next.
-function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapshot }) {
-  const { sections } = parseAnalysis(text)
-  const n = sections.length
+// The dark "cover" card: scores rings + stress + the verdict (tinted by recovery).
+function CoverCard({ latest, prev }: { latest: HistoryReport; prev: HistoryReport | null }) {
+  const sc = latest.scores
+  const d = (a?: number | null, b?: number | null) => (a != null && b != null ? a - b : null)
+  const dc = (x: number | null) => (x == null ? '#aeb6ae' : x > 0 ? '#4ade80' : '#f87171')
+  const v = buildVerdict(sc)
+  const vColor = sc.recovery == null ? '#fbf7f0' : sc.recovery >= 70 ? '#5fe3a1' : sc.recovery >= 40 ? '#f5c451' : '#f88b8b'
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
+      <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#80d6b7', fontWeight: 700, textAlign: 'center' }}>
+        Today&rsquo;s read · {shortDate(latest.created_at)}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'center' }}>
+        {sc.recovery != null && <Ring value={sc.recovery} color={recoveryColor(sc.recovery)} label="Recovery" delta={d(sc.recovery, prev?.scores.recovery)} deltaColor={dc(d(sc.recovery, prev?.scores.recovery))} dark />}
+        {sc.sleep != null && <Ring value={sc.sleep} color={sleepColor(sc.sleep)} label="Sleep" delta={d(sc.sleep, prev?.scores.sleep)} deltaColor={dc(d(sc.sleep, prev?.scores.sleep))} dark />}
+        {sc.strain != null && <Ring value={sc.strain} color="#7fb8cc" label="Strain" delta={d(sc.strain, prev?.scores.strain)} deltaColor="#aeb6ae" dark />}
+      </div>
+      {sc.stress != null && <div style={{ textAlign: 'center' }}><StressPill level={sc.stress} dark /></div>}
+      {v && <p style={{ fontFamily: SERIF, fontSize: 21, lineHeight: 1.32, fontWeight: 600, color: vColor, margin: 0, textAlign: 'center' }}>{v}</p>}
+      <p style={{ fontSize: 12, color: '#9fb3a8', textAlign: 'center', margin: 0 }}>Swipe to read your full analysis →</p>
+    </div>
+  )
+}
+
+interface DeckCard { key: string; node: React.ReactNode; bg: string; accent: string; dark?: boolean }
+
+// The whole read as one stacked swipe deck. Card 1 is the cover; swipe (or fling,
+// or tap ›) to reveal the next. Progress bar + counter anchor you to the set.
+function Deck({ cards }: { cards: DeckCard[] }) {
+  const n = cards.length
   const [i, setI] = useState(0)
   const [dx, setDx] = useState(0)
+  const [flyMs, setFlyMs] = useState(360)
   const dragging = useRef(false)
   const startX = useRef(0)
+  const lastX = useRef(0)
+  const lastT = useRef(0)
+  const vel = useRef(0)
   const THRESH = 64
+  const VTHRESH = 0.5 // px/ms — a fast flick advances even on a short drag
 
-  // Hooks must run unconditionally; bail to the linear view after them.
-  if (n <= 1) return <Analysis text={text} metrics={metrics} />
+  const cardBox = (card: DeckCard, extra: React.CSSProperties): React.CSSProperties => ({
+    background: card.bg,
+    border: card.dark ? '1px solid rgba(255,255,255,0.10)' : `1px solid ${BORDER}`,
+    borderLeft: `3px solid ${card.accent}`,
+    borderRadius: 16,
+    padding: '20px 18px',
+    boxShadow: '0 16px 36px -16px rgba(20,40,32,.5)',
+    ...extra,
+  })
+
+  if (n === 1) return <div style={cardBox(cards[0], {})}>{cards[0].node}</div>
 
   const goTo = (k: number) => {
     const j = Math.max(0, Math.min(n - 1, k))
-    if (j !== i) navigator.vibrate?.(6) // subtle tactile tick on phones
-    setI(j)
+    if (j !== i) { navigator.vibrate?.(6); setFlyMs(360); setI(j) }
   }
-  const onDown = (e: React.PointerEvent) => { dragging.current = true; startX.current = e.clientX }
-  const onMove = (e: React.PointerEvent) => { if (dragging.current) setDx(e.clientX - startX.current) }
+  const onDown = (e: React.PointerEvent) => {
+    dragging.current = true; startX.current = e.clientX; lastX.current = e.clientX; lastT.current = performance.now(); vel.current = 0
+  }
+  const onMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return
+    const now = performance.now(), dt = now - lastT.current
+    if (dt > 0) vel.current = (e.clientX - lastX.current) / dt
+    lastX.current = e.clientX; lastT.current = now
+    setDx(e.clientX - startX.current)
+  }
   const end = () => {
     if (!dragging.current) return
     dragging.current = false
-    if (dx <= -THRESH && i < n - 1) goTo(i + 1)
-    else if (dx >= THRESH && i > 0) goTo(i - 1)
+    const v = vel.current, fast = Math.abs(v) > VTHRESH
+    if ((dx <= -THRESH || (fast && v < 0)) && i < n - 1) { navigator.vibrate?.(6); setFlyMs(fast ? 190 : 340); setI(i + 1) }
+    else if (dx >= THRESH && i > 0) { navigator.vibrate?.(6); setFlyMs(340); setI(i - 1) }
     setDx(0)
   }
 
-  const cardStyle = (off: number, kind: Kind): React.CSSProperties => {
-    const t = sectionTint(kind)
+  const cardStyle = (off: number, card: DeckCard): React.CSSProperties => {
     const progress = Math.min(Math.abs(dx) / 280, 1) // 0→1 as the top card is dragged
-    const base: React.CSSProperties = {
+    const dur = off < 0 ? flyMs : 360
+    const base = cardBox(card, {
       position: 'absolute', inset: 0, overflowY: 'auto', boxSizing: 'border-box',
-      background: t.bg, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.accent}`,
-      borderRadius: 16, padding: '18px 18px 20px', boxShadow: '0 16px 36px -16px rgba(20,40,32,.5)',
-      transition: dragging.current ? 'none' : 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s',
+      transition: dragging.current ? 'none' : `transform ${dur}ms cubic-bezier(.2,.8,.2,1), opacity ${dur}ms`,
       touchAction: 'pan-y',
-    }
-    // Behind cards peek via centred scale and RISE toward full size as you drag
-    // the top card away — gives the swipe a sense of anticipation.
+    })
+    // Behind cards peek via centred scale and RISE toward full size as you drag.
     if (off < 0) return { ...base, transform: 'translateX(-130%) rotate(-10deg)', opacity: 0, zIndex: 1, pointerEvents: 'none' }
-    if (off === 0) return { ...base, transform: `translateX(${dx}px) rotate(${dx * 0.04}deg)`, zIndex: 30, cursor: 'grab' }
+    if (off === 0) return { ...base, transform: `translateX(${dx}px) rotate(${dx * 0.04}deg)`, zIndex: 30, cursor: 'grab', animation: i === 0 && !dragging.current && dx === 0 ? 'tmNudge 1.15s ease 0.8s 1' : undefined }
     if (off === 1) return { ...base, transform: `scale(${0.955 + 0.045 * progress})`, opacity: 0.6 + 0.4 * progress, zIndex: 20, pointerEvents: 'none' }
-    if (off === 2) return { ...base, transform: `scale(${0.91 + 0.045 * progress})`, opacity: 0.32 + 0.28 * progress, zIndex: 10, pointerEvents: 'none' }
+    if (off === 2) return { ...base, transform: `scale(${0.91 + 0.045 * progress})`, opacity: 0.34 + 0.28 * progress, zIndex: 10, pointerEvents: 'none' }
     return { ...base, transform: 'scale(0.91)', opacity: 0, zIndex: 0, pointerEvents: 'none' }
   }
 
@@ -391,15 +435,15 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
 
   return (
     <div>
-      {/* Position anchor */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>{i + 1} of {n}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {sections.map((_, k) => (
-              <button key={k} onClick={() => goTo(k)} aria-label={`Card ${k + 1}`} style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: k === i ? ACCENT : '#d8d2c6', transition: 'background .2s' }} />
-            ))}
-          </div>
+      {/* Stories-style progress bar + counter + arrows */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {cards.map((_, k) => (
+            <button key={k} onClick={() => goTo(k)} aria-label={`Card ${k + 1}`} style={{ flex: 1, height: 4, borderRadius: 2, border: 'none', padding: 0, cursor: 'pointer', background: k <= i ? ACCENT : '#e2dcd0', transition: 'background .25s' }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 9 }}>
+          <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>{i + 1} of {n}</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => goTo(i - 1)} disabled={i === 0} aria-label="Previous" style={arrow(i === 0)}>‹</button>
             <button onClick={() => goTo(i + 1)} disabled={i === n - 1} aria-label="Next" style={arrow(i === n - 1)}>›</button>
@@ -407,32 +451,31 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
         </div>
       </div>
 
-      {/* Clip layer: padding gives the card shadow room; negative margin keeps
-          cards full-width; overflow hidden contains the fly-out (no page scroll). */}
-      <div style={{ overflow: 'hidden', padding: '10px 16px 28px', margin: '0 -16px' }}>
-      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)' }}>
-        {sections.map((sec, k) => {
-          const off = k - i
-          const active = off === 0
-          return (
-            <div
-              key={k}
-              onPointerDown={active ? onDown : undefined}
-              onPointerMove={active ? onMove : undefined}
-              onPointerUp={active ? end : undefined}
-              onPointerCancel={active ? end : undefined}
-              onPointerLeave={active ? end : undefined}
-              style={cardStyle(off, sec.kind)}
-            >
-              <AnalysisSection section={sec} metrics={metrics} framed={false} />
-            </div>
-          )
-        })}
-      </div>
+      {/* Clip layer (shadow room + contains fly-out) → relative stack */}
+      <div style={{ overflow: 'hidden', padding: '12px 16px 30px', margin: '0 -16px' }}>
+        <div style={{ position: 'relative', height: 'clamp(340px, 56vh, 560px)' }}>
+          {cards.map((card, k) => {
+            const off = k - i
+            const active = off === 0
+            return (
+              <div
+                key={card.key}
+                onPointerDown={active ? onDown : undefined}
+                onPointerMove={active ? onMove : undefined}
+                onPointerUp={active ? end : undefined}
+                onPointerCancel={active ? end : undefined}
+                onPointerLeave={active ? end : undefined}
+                style={cardStyle(off, card)}
+              >
+                {card.node}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 2 }}>
-        {i < n - 1 ? 'Swipe for the next →' : 'End of analysis'}
+        {i < n - 1 ? 'Swipe for the next →' : 'End of your read'}
       </p>
     </div>
   )
@@ -442,6 +485,7 @@ const keyframes = `
 @keyframes tmFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tmFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tmDraw { from { stroke-dashoffset: 1400; } to { stroke-dashoffset: 0; } }
+@keyframes tmNudge { 0%,100% { transform: translateX(0) rotate(0); } 55% { transform: translateX(-24px) rotate(-2deg); } 78% { transform: translateX(7px) rotate(.6deg); } }
 .tm-deck::-webkit-scrollbar { display: none; }
 `
 
@@ -565,7 +609,6 @@ export default function HistoryClient() {
 
   const latest = data.reports[0] ?? null
   const prev = data.reports[1] ?? null
-  const delta = (a?: number | null, b?: number | null) => (a != null && b != null ? a - b : null)
 
   let section = -1
   const anim = (extra = 0) => ({ animation: 'tmFadeUp .5s ease both', animationDelay: `${(++section) * 0.07 + extra}s` })
@@ -574,77 +617,29 @@ export default function HistoryClient() {
     <>
       <div style={anim()}>{heading(data.user.name)}</div>
 
-      {/* Hero — latest read */}
-      {latest && (
-        <section
-          style={{
-            background: CARD,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 18,
-            overflow: 'hidden',
-            margin: '22px 0 26px',
-            boxShadow: '0 10px 30px -18px rgba(20,40,32,0.5)',
-            ...anim(),
-          }}
-        >
-          {/* Dark scores panel */}
-          <div style={{ background: 'radial-gradient(130% 150% at 50% -10%, #21342c 0%, #121c17 72%)', padding: '24px 22px 26px' }}>
-            <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#80d6b7', fontWeight: 600, marginBottom: 18, textAlign: 'center' }}>
-              Latest · {longDate(latest.created_at)}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, justifyContent: 'center', marginBottom: latest.scores.stress != null ? 20 : 2 }}>
-              {latest.scores.recovery != null && (
-                <Ring
-                  value={latest.scores.recovery}
-                  color={recoveryColor(latest.scores.recovery)}
-                  label="Recovery"
-                  delta={delta(latest.scores.recovery, prev?.scores.recovery)}
-                  deltaColor={(() => { const d = delta(latest.scores.recovery, prev?.scores.recovery); return d == null ? '#aeb6ae' : d > 0 ? '#4ade80' : '#f87171' })()}
-                  dark
-                />
-              )}
-              {latest.scores.sleep != null && (
-                <Ring
-                  value={latest.scores.sleep}
-                  color={sleepColor(latest.scores.sleep)}
-                  label="Sleep"
-                  delta={delta(latest.scores.sleep, prev?.scores.sleep)}
-                  deltaColor={(() => { const d = delta(latest.scores.sleep, prev?.scores.sleep); return d == null ? '#aeb6ae' : d > 0 ? '#4ade80' : '#f87171' })()}
-                  dark
-                />
-              )}
-              {latest.scores.strain != null && (
-                <Ring
-                  value={latest.scores.strain}
-                  color="#7fb8cc"
-                  label="Strain"
-                  delta={delta(latest.scores.strain, prev?.scores.strain)}
-                  deltaColor="#aeb6ae"
-                  dark
-                />
-              )}
-            </div>
-            {latest.scores.stress != null && (
-              <div style={{ textAlign: 'center' }}>
-                <StressPill level={latest.scores.stress} dark />
-              </div>
-            )}
-          </div>
-          {/* Light snapshot body — the read's headline, kept with the scores */}
-          <div style={{ padding: '18px 22px 20px' }}>
-            <VerdictLine text={buildVerdict(latest.scores)} />
-            <DayOverDayCard dod={latest.day_over_day} />
-          </div>
-        </section>
-      )}
-
-      {/* Analysis — its own section so the swipe cards stand on their own */}
-      {latest && (
-        <section style={{ marginBottom: 26, ...anim() }}>
-          <AnalysisDeck text={latest.analysis} metrics={latest.metrics} />
-          <ShareRow id={latest.id} />
-        </section>
-      )}
+      {/* The whole read as one swipe deck: cover (scores + verdict) → day-over-day → sections */}
+      {latest && (() => {
+        const sections = parseAnalysis(latest.analysis).sections
+        const KICK: Record<Kind, string> = { good: 'Strengths', warn: 'Watch-outs', actions: 'This week', list: 'Notes' }
+        const deckCards: DeckCard[] = [
+          { key: 'cover', dark: true, accent: '#2f9e80', bg: 'radial-gradient(130% 150% at 50% -10%, #21342c 0%, #121c17 72%)', node: <CoverCard latest={latest} prev={prev} /> },
+        ]
+        if (latest.day_over_day) deckCards.push({ key: 'dod', accent: ACCENT, bg: '#fffdf9', node: <DayOverDayCard dod={latest.day_over_day} framed={false} /> })
+        if (sections.length) {
+          sections.forEach((sec, k) => {
+            const t = sectionTint(sec.kind)
+            deckCards.push({ key: `s${k}`, accent: t.accent, bg: t.bg, node: <AnalysisSection section={sec} metrics={latest.metrics} framed={false} size="lg" kicker={KICK[sec.kind]} /> })
+          })
+        } else {
+          deckCards.push({ key: 'full', accent: ACCENT, bg: '#fffdf9', node: <Analysis text={latest.analysis} metrics={latest.metrics} /> })
+        }
+        return (
+          <section style={{ margin: '22px 0 26px', ...anim() }}>
+            <Deck cards={deckCards} />
+            <div style={{ marginTop: 10 }}><ShareRow id={latest.id} /></div>
+          </section>
+        )
+      })()}
 
       {/* Personalisation — collapsed into an invite by default to keep the page calm */}
       <section style={{ marginBottom: 26, ...anim() }}>
