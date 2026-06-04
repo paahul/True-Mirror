@@ -40,6 +40,7 @@ Rules:
 - Keep it under 450 words total.
 - No nested bullet points — short punchy sentences only.
 - In "What's working" and "What needs attention", begin each line with a metric tag in double brackets naming the single most relevant metric, from EXACTLY this list: recovery, sleep, hrv, resting_hr, strain, stress, steps, active_energy, exercise, respiratory_rate, spo2, vo2, weight, none. Example: "[[resting_hr]] Your resting HR has crept up to 76." Use [[none]] when no single metric fits. (Do NOT tag the "Three things to do this week" actions.)
+- If the data is too thin to judge something — a metric is missing, or there are too few days — say so plainly ("not enough sleep data yet to call it; track a few nights"), rather than inventing an assessment. Never pad a sparse dataset into a confident read.
 - Do not add a preamble or sign-off.`
 
 function detectTrend<T extends { date: string }>(daily: T[], getValue: (d: T) => number): string | null {

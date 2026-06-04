@@ -346,6 +346,38 @@ function CoverCard({ latest, prev }: { latest: HistoryReport; prev: HistoryRepor
   )
 }
 
+function humanList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? ''
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+}
+
+// Honest cover when there isn't enough to give a real read — protects the first
+// impression instead of showing hollow rings. Shown when no core score exists.
+function NotEnoughCard({ report }: { report: HistoryReport }) {
+  const haveLabels = Object.values(report.metrics).map((m) => m.label)
+  const have = haveLabels.length > 3 ? ['your activity data'] : haveLabels
+  const need = [
+    report.scores.recovery == null && 'a few nights of HRV',
+    report.scores.sleep == null && 'sleep tracking',
+  ].filter(Boolean) as string[]
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
+      <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#80d6b7', fontWeight: 700, textAlign: 'center' }}>
+        First look · {shortDate(report.created_at)}
+      </div>
+      <p style={{ fontFamily: SERIF, fontSize: 22, lineHeight: 1.3, fontWeight: 600, color: '#fbf7f0', margin: 0, textAlign: 'center' }}>
+        Not enough data yet for an honest read.
+      </p>
+      <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#c4cfc8', margin: 0, textAlign: 'center' }}>
+        {have.length > 0 && `I can already see ${humanList(have)}. `}
+        {need.length > 0
+          ? `For a real read I still need ${humanList(need)} — keep your Watch on (and charged overnight) for a few more days.`
+          : 'Give it a few more days of consistent wear and it sharpens fast.'}
+      </p>
+    </div>
+  )
+}
+
 interface DeckCard { key: string; node: React.ReactNode; bg: string; accent: string; dark?: boolean }
 
 // The whole read as one stacked swipe deck. Card 1 is the cover; swipe (or fling,
@@ -608,8 +640,16 @@ export default function HistoryClient() {
       {latest && (() => {
         const sections = parseAnalysis(latest.analysis).sections
         const KICK: Record<Kind, string> = { good: 'Strengths', warn: 'Watch-outs', actions: 'This week', list: 'Notes' }
+        const sc = latest.scores
+        const enoughData = sc.recovery != null || sc.sleep != null || sc.strain != null
         const deckCards: DeckCard[] = [
-          { key: 'cover', dark: true, accent: '#2f9e80', bg: 'radial-gradient(130% 150% at 50% -10%, #21342c 0%, #121c17 72%)', node: <CoverCard latest={latest} prev={prev} /> },
+          {
+            key: 'cover',
+            dark: true,
+            accent: '#2f9e80',
+            bg: 'radial-gradient(130% 150% at 50% -10%, #21342c 0%, #121c17 72%)',
+            node: enoughData ? <CoverCard latest={latest} prev={prev} /> : <NotEnoughCard report={latest} />,
+          },
         ]
         if (latest.day_over_day) deckCards.push({ key: 'dod', accent: ACCENT, bg: '#fffdf9', node: <DayOverDayCard dod={latest.day_over_day} framed={false} /> })
         if (sections.length) {
