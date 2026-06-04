@@ -23,6 +23,8 @@ A read you can act on, not a dashboard to interpret. A sample:
 >
 > **Three things to do this week** — Fix the 90-minute gap between lights-out and asleep. Track HRV daily back above 50. Three easy zone-2 walks before any hard session.
 
+On the history page you read it as a **swipe-through card deck** — your scores and a one-line verdict up front, a **day-over-day** card (what changed vs. your last full day), then strengths, watch-outs, and each weekly action one card at a time. Each finding carries a live metric chip pulled from your own numbers.
+
 Behind the words are four signals, each grounded in published methods rather than invented:
 
 - **Recovery** — HRV vs. your own baseline, plus resting HR and sleep. Are you ready to push or should you back off? (Altini / HRV4Training method.)
@@ -47,6 +49,7 @@ A few decisions worth calling out:
 - **Calibrated honesty is the product.** No streaks or badges — it says what's in the data, even when that's "your sleep's been slipping for three weeks."
 - **Scores grounded in published methods**, not vibes — Oura-style sleep, Altini/HRV4Training recovery, Banister TRIMP strain. They orient Claude; Claude grounds its prose in the raw figures.
 - **Scores are recomputed, not stored.** The DB keeps only the raw payload + analysis text; the history endpoint recomputes scores from `raw_data` on read, so trend charts work retroactively and there's one source of truth for the math.
+- **Prose tagged to data, not regex'd.** Claude tags each finding with the metric it's about (`[[resting_hr]]`); the UI strips the tag and attaches a live chip (the actual value + day-over-day delta). Lets the narrative stay free-form while the numbers stay structured and accurate — the model does the linking, not a fragile parser.
 - **The referral loop is a URL.** Every saved analysis gets a shareable `/report/[id]` page with a "Get True Mirror" CTA.
 - **Incentives aligned on the Watch-charging problem.** The app's value rises the more consistently you wear your Watch, so the (opt-in) charge/wear reminders are in the product's interest, not a dark pattern.
 
@@ -97,7 +100,8 @@ Loading a report or history page is just a Supabase read — no AI call per view
 | **M4 — Onboard first friends** | Manual provisioning; validated end-to-end on two real (non-builder) phones, sparse and dense data | ✅ Shipped |
 | **M5 — Registration flow** | Self-serve first-run token provisioning | ❌ Dropped — doesn't remove the real (permission/device) friction; manual provisioning is fine at personal scale |
 | **M6 — UI polish** | Brand-cohesive redesign across all surfaces: history hero (dark glowing ring gauges, count-up, Δ-vs-last-run), gradient trend charts, polished report page | ✅ Shipped |
-| **M7 — Richer "Whoop-style" charts** | Per-day dashboard visuals (rings/curves over time) — needs granular per-day capture; likely a separate "daily snapshot" Shortcut | ⏸️ Deferred (decision fork — see `plan.md`) |
+| **M7a — Day-over-day + card-deck read** | Acute "since your last full day" diff (two most recent completed days, anchored on the data not the clock); the history read rebuilt as a swipe-through card deck (cover → day-over-day → strengths → watch-outs → action flashcards) with progress bar, nudge, throw physics; verdict line; live metric chips wired to each finding via structured tags | ✅ Shipped |
+| **M7b — Richer "Whoop-style" charts** | Per-day dashboard visuals (rings/curves over time) — needs the granular per-day capture (daily arrays) the day-over-day work already wired server-side | ⏸️ Deferred (build the Shortcut daily loops first) |
 | **M8 — Email reminders** | Resend-backed charge/wear nudges (needs hourly cron → Vercel Pro) | ⏸️ Deferred |
 
 Status legend: **✅ Shipped** (built + deployed) · **⏸️ Deferred** (intentionally parked) · **❌ Dropped** (won't do).

@@ -1,3 +1,7 @@
+import type { DayOverDay, MetricSnapshot } from '@/lib/types'
+import Analysis, { VerdictLine } from '@/app/components/Analysis'
+import DayOverDayCard from '@/app/components/DayOverDayCard'
+
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 const INK = '#1a1a18'
@@ -5,6 +9,40 @@ const MUTED = '#6f6b62'
 const ACCENT = '#1f6f63'
 const CARD = '#fffdf9'
 const BORDER = '#e7e2d8'
+
+// Sample report, rendered with the real product components so the homepage
+// preview always matches what users actually get.
+const SAMPLE_VERDICT = 'Moderately recovered but under-slept — keep today easy.'
+
+const SAMPLE_DOD: DayOverDay = {
+  latestDate: '2026-06-03',
+  priorDate: '2026-06-02',
+  lead: 'HRV is down 14 ms since your last full day — worth taking it easy today.',
+  deltas: [
+    { key: 'hrv', label: 'HRV', value: 44, prior: 58, delta: -14, unit: ' ms', decimals: 0, favorable: 'bad' },
+    { key: 'resting_hr', label: 'Resting HR', value: 68, prior: 64, delta: 4, unit: ' bpm', decimals: 0, favorable: 'bad' },
+    { key: 'sleep', label: 'Sleep', value: 6.1, prior: 7.4, delta: -1.3, unit: 'h', decimals: 1, favorable: 'bad' },
+    { key: 'steps', label: 'Steps', value: 8420, prior: 7180, delta: 1240, unit: '', decimals: 0, favorable: 'good' },
+  ],
+}
+
+const SAMPLE_METRICS: MetricSnapshot = {
+  vo2: { label: 'VO₂ max', value: '41 ml/kg/min' },
+  steps: { label: 'Steps', value: '8,420/day' },
+  hrv: { label: 'HRV', value: '44 ms', delta: '↓14', favorable: 'bad' },
+}
+
+const SAMPLE_ANALYSIS = `**What's working**
+[[vo2]] Your aerobic base is holding — VO₂ max of 41 hasn't slipped despite a lighter month.
+[[steps]] Daily movement is solid — 8.4k steps a day without forcing it.
+
+**What needs attention**
+[[hrv]] HRV dropped 31% to 44 ms and resting HR is up to 68 — you're recovering worse while training less. That's stress, not fatigue.
+
+**Three things to do this week**
+1. Fix the 90-minute gap between lights-out and actually asleep.
+2. Get HRV back above 50 — track it daily.
+3. Three easy zone-2 walks before any hard session.`
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
@@ -108,8 +146,8 @@ export default function Home() {
         </h1>
         <p style={{ fontSize: 19, color: '#3a3a36', margin: '0 0 24px', maxWidth: 580 }}>
           An iOS Shortcut reads your last 30 days of Apple Health data and Claude gives you a
-          direct, no-sugarcoating analysis — what’s working, what needs attention, and three
-          things to do this week. In about ten seconds.
+          direct, no-sugarcoating analysis — what’s working, what needs attention, what changed
+          since yesterday, and three things to do this week. In about ten seconds.
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Chip>No App Store</Chip>
@@ -159,29 +197,25 @@ export default function Home() {
       <Section kicker="What you get" title="A read you can act on">
         <div
           style={{
-            background: CARD,
+            background: '#f7f4ee',
             border: `1px solid ${BORDER}`,
-            borderRadius: 14,
-            padding: '22px 24px',
-            marginBottom: 24,
+            borderRadius: 16,
+            padding: '20px 20px 22px',
+            marginBottom: 14,
           }}
         >
-          <div style={{ fontSize: 12, color: MUTED, marginBottom: 14 }}>Sample analysis</div>
-          <h3 style={{ fontFamily: SERIF, fontSize: 17, margin: '0 0 4px' }}>What’s working</h3>
-          <p style={{ margin: '0 0 14px', color: '#3a3a36', fontSize: 15 }}>
-            Your aerobic base is holding — VO₂ max of 41 hasn’t slipped despite the lighter month.
-          </p>
-          <h3 style={{ fontFamily: SERIF, fontSize: 17, margin: '0 0 4px' }}>What needs attention</h3>
-          <p style={{ margin: '0 0 14px', color: '#3a3a36', fontSize: 15 }}>
-            HRV dropped 31% to 44ms and resting HR is up to 68. You’re recovering worse while
-            training less — that’s stress, not fatigue.
-          </p>
-          <h3 style={{ fontFamily: SERIF, fontSize: 17, margin: '0 0 4px' }}>Three things to do this week</h3>
-          <p style={{ margin: 0, color: '#3a3a36', fontSize: 15 }}>
-            Fix the 90-minute gap between lights-out and asleep. Track HRV daily back above 50.
-            Three easy zone-2 walks before any hard session.
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <span style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>Sample analysis</span>
+            <span style={{ fontSize: 12, color: MUTED }}>3 June</span>
+          </div>
+          <VerdictLine text={SAMPLE_VERDICT} />
+          <DayOverDayCard dod={SAMPLE_DOD} />
+          <Analysis text={SAMPLE_ANALYSIS} metrics={SAMPLE_METRICS} />
         </div>
+        <p style={{ color: MUTED, fontSize: 13.5, margin: '0 0 24px' }}>
+          In the app this is a card deck — your scores and verdict up front, then you swipe through
+          strengths, watch-outs, and each action one at a time.
+        </p>
         <p style={{ color: MUTED, fontSize: 14, margin: '0 0 16px' }}>
           Behind the words, four signals — grounded in published methods, not made up:
         </p>
