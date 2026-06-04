@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import type { HistoryResponse, HistoryReport, UserMode } from '@/lib/types'
+import type { HistoryResponse, HistoryReport, UserMode, MetricSnapshot } from '@/lib/types'
 import { buildVerdict } from '@/lib/verdict'
 import DayOverDayCard from '@/app/components/DayOverDayCard'
-import Analysis, { VerdictLine } from '@/app/components/Analysis'
+import Analysis, { VerdictLine, AnalysisSection, parseAnalysis, sectionTint, type Kind } from '@/app/components/Analysis'
 
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -335,6 +335,99 @@ function ReportDeck({ reports }: { reports: HistoryReport[] }) {
   )
 }
 
+// Stacked swipe deck for the CURRENT analysis: one section card on top, the
+// rest peeking behind. Read it, swipe (or tap ›) to reveal the next.
+function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapshot }) {
+  const { sections } = parseAnalysis(text)
+  const n = sections.length
+  const [i, setI] = useState(0)
+  const [dx, setDx] = useState(0)
+  const dragging = useRef(false)
+  const startX = useRef(0)
+  const THRESH = 64
+
+  // Hooks must run unconditionally; bail to the linear view after them.
+  if (n <= 1) return <Analysis text={text} metrics={metrics} />
+
+  const goTo = (k: number) => setI(Math.max(0, Math.min(n - 1, k)))
+  const onDown = (e: React.PointerEvent) => { dragging.current = true; startX.current = e.clientX }
+  const onMove = (e: React.PointerEvent) => { if (dragging.current) setDx(e.clientX - startX.current) }
+  const end = () => {
+    if (!dragging.current) return
+    dragging.current = false
+    if (dx <= -THRESH && i < n - 1) goTo(i + 1)
+    else if (dx >= THRESH && i > 0) goTo(i - 1)
+    setDx(0)
+  }
+
+  const cardStyle = (off: number, kind: Kind): React.CSSProperties => {
+    const t = sectionTint(kind)
+    const base: React.CSSProperties = {
+      position: 'absolute', inset: 0, overflowY: 'auto', boxSizing: 'border-box',
+      background: t.bg, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.accent}`,
+      borderRadius: 16, padding: '18px 18px 20px', boxShadow: '0 10px 30px -18px rgba(20,40,32,.45)',
+      transition: dragging.current && off === 0 ? 'none' : 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s',
+      touchAction: 'pan-y',
+    }
+    if (off < 0) return { ...base, transform: 'translateX(-130%) rotate(-10deg)', opacity: 0, zIndex: 1, pointerEvents: 'none' }
+    if (off === 0) return { ...base, transform: `translateX(${dx}px) rotate(${dx * 0.04}deg)`, zIndex: 30, cursor: 'grab' }
+    if (off === 1) return { ...base, transform: 'translateY(14px) scale(0.955)', opacity: 0.55, zIndex: 20, pointerEvents: 'none' }
+    if (off === 2) return { ...base, transform: 'translateY(28px) scale(0.91)', opacity: 0.3, zIndex: 10, pointerEvents: 'none' }
+    return { ...base, transform: 'translateY(28px) scale(0.91)', opacity: 0, zIndex: 0, pointerEvents: 'none' }
+  }
+
+  const arrow = (disabled: boolean): React.CSSProperties => ({
+    width: 28, height: 28, borderRadius: '50%', border: `1px solid ${BORDER}`, background: '#fff',
+    color: disabled ? '#cfc9bd' : ACCENT, cursor: disabled ? 'default' : 'pointer', fontSize: 16, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+  })
+
+  return (
+    <div>
+      {/* Position anchor */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>{i + 1} of {n}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {sections.map((_, k) => (
+              <button key={k} onClick={() => goTo(k)} aria-label={`Card ${k + 1}`} style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: k === i ? ACCENT : '#d8d2c6', transition: 'background .2s' }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => goTo(i - 1)} disabled={i === 0} aria-label="Previous" style={arrow(i === 0)}>‹</button>
+            <button onClick={() => goTo(i + 1)} disabled={i === n - 1} aria-label="Next" style={arrow(i === n - 1)}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* The stack */}
+      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)' }}>
+        {sections.map((sec, k) => {
+          const off = k - i
+          const active = off === 0
+          return (
+            <div
+              key={k}
+              onPointerDown={active ? onDown : undefined}
+              onPointerMove={active ? onMove : undefined}
+              onPointerUp={active ? end : undefined}
+              onPointerCancel={active ? end : undefined}
+              onPointerLeave={active ? end : undefined}
+              style={cardStyle(off, sec.kind)}
+            >
+              <AnalysisSection section={sec} metrics={metrics} framed={false} />
+            </div>
+          )
+        })}
+      </div>
+
+      <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 10 }}>
+        {i < n - 1 ? 'Swipe for the next →' : 'End of analysis'}
+      </p>
+    </div>
+  )
+}
+
 const keyframes = `
 @keyframes tmFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tmFade { from { opacity: 0; } to { opacity: 1; } }
@@ -531,7 +624,7 @@ export default function HistoryClient() {
           <div style={{ padding: '18px 22px 22px' }}>
             <VerdictLine text={buildVerdict(latest.scores)} />
             <DayOverDayCard dod={latest.day_over_day} />
-            <Analysis text={latest.analysis} metrics={latest.metrics} />
+            <AnalysisDeck text={latest.analysis} metrics={latest.metrics} />
             <ShareRow id={latest.id} />
           </div>
         </section>

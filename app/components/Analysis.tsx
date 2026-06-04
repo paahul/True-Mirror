@@ -16,7 +16,7 @@ const WARN_BORDER = '#ecdcc0'
 const GOOD_BG = '#eef6f0'
 const GOOD_BORDER = '#cfe6d6'
 
-type Kind = 'good' | 'warn' | 'actions' | 'list'
+export type Kind = 'good' | 'warn' | 'actions' | 'list'
 
 // The narrative always has the same 3-part skeleton (enforced by the system
 // prompt), so we can style it without parsing the per-person prose: detect the
@@ -30,9 +30,16 @@ const SECTION_KINDS: { match: RegExp; kind: Kind }[] = [
 
 const KIND_COLOR: Record<Kind, string> = { good: C_GOOD, warn: C_WARN, actions: ACCENT, list: ACCENT }
 
-interface Section { title: string; kind: Kind; body: string[] }
+export interface Section { title: string; kind: Kind; body: string[] }
 
-function parse(text: string): { preamble: string[]; sections: Section[] } {
+// Tint for a section when shown as its own card (e.g. in the swipe deck).
+export function sectionTint(kind: Kind): { bg: string; accent: string } {
+  if (kind === 'good') return { bg: GOOD_BG, accent: C_GOOD }
+  if (kind === 'warn') return { bg: WARN_BG, accent: C_WARN }
+  return { bg: '#fffdf9', accent: ACCENT }
+}
+
+export function parseAnalysis(text: string): { preamble: string[]; sections: Section[] } {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
   const sections: Section[] = []
   const preamble: string[] = []
@@ -115,6 +122,80 @@ export function VerdictLine({ text, size = 'md' }: { text: string | null; size?:
   )
 }
 
+// Renders ONE section. `framed` adds the tinted callout card (linear view);
+// the swipe deck passes framed={false} since the deck card is the container.
+export function AnalysisSection({
+  section: sec,
+  metrics,
+  size = 'md',
+  framed = true,
+}: {
+  section: Section
+  metrics?: MetricSnapshot
+  size?: keyof typeof SIZES
+  framed?: boolean
+}) {
+  const s = SIZES[size]
+  const color = KIND_COLOR[sec.kind]
+  const header = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+      <Icon kind={sec.kind} color={color} />
+      <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
+    </div>
+  )
+
+  const content =
+    sec.kind === 'actions' ? (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {sec.body.map((line, j) => (
+          <div
+            key={`act-${j}`}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 11, background: PILL_BG, border: `1px solid ${BORDER}`, borderRadius: 11, padding: '11px 13px' }}
+          >
+            <span
+              style={{ flex: '0 0 auto', width: 22, height: 22, borderRadius: '50%', background: ACCENT, color: '#fff', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}
+            >
+              {j + 1}
+            </span>
+            <span style={{ fontSize: s.action, lineHeight: 1.45, color: INK }}>{inline(stripMarker(line), `act-${j}`)}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      sec.body.map((line, j) => {
+        const { tag, text: body } = extractTag(stripMarker(line))
+        const chip = tag && metrics ? metrics[tag] : undefined
+        return (
+          <div key={`p-${j}`} style={{ margin: '6px 0' }}>
+            <p style={{ display: 'flex', gap: 8, margin: 0, lineHeight: 1.55, fontSize: s.body, color: BODY }}>
+              <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
+              <span>{inline(body, `p-${j}`)}</span>
+            </p>
+            {chip && <ChipView chip={chip} />}
+          </div>
+        )
+      })
+    )
+
+  // Tinted callout for working/attention in the linear (framed) view.
+  if (framed && (sec.kind === 'good' || sec.kind === 'warn')) {
+    const t = sectionTint(sec.kind)
+    return (
+      <div style={{ background: t.bg, border: `1px solid ${sec.kind === 'good' ? GOOD_BORDER : WARN_BORDER}`, borderLeft: `3px solid ${t.accent}`, borderRadius: 12, padding: '13px 15px 14px' }}>
+        {header}
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {header}
+      {content}
+    </div>
+  )
+}
+
 export default function Analysis({
   text,
   metrics,
@@ -124,7 +205,7 @@ export default function Analysis({
   metrics?: MetricSnapshot
   size?: keyof typeof SIZES
 }) {
-  const { preamble, sections } = parse(text)
+  const { preamble, sections } = parseAnalysis(text)
   const s = SIZES[size]
 
   return (
@@ -134,75 +215,11 @@ export default function Analysis({
           {inline(line, `pre-${i}`)}
         </p>
       ))}
-
-      {sections.map((sec, i) => {
-        const color = KIND_COLOR[sec.kind]
-        const header = (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Icon kind={sec.kind} color={color} />
-            <h3 style={{ fontFamily: SERIF, fontSize: s.header, fontWeight: 600, color, margin: 0 }}>{sec.title}</h3>
-          </div>
-        )
-        const bullets = sec.body.map((line, j) => {
-          const { tag, text: body } = extractTag(stripMarker(line))
-          const chip = tag && metrics ? metrics[tag] : undefined
-          return (
-            <div key={`p-${i}-${j}`} style={{ margin: '6px 0' }}>
-              <p style={{ display: 'flex', gap: 8, margin: 0, lineHeight: 1.55, fontSize: s.body, color: BODY }}>
-                <span aria-hidden style={{ color, flex: '0 0 auto' }}>·</span>
-                <span>{inline(body, `p-${i}-${j}`)}</span>
-              </p>
-              {chip && <ChipView chip={chip} />}
-            </div>
-          )
-        })
-
-        // "Three things to do this week" → numbered action cards.
-        if (sec.kind === 'actions') {
-          return (
-            <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 22 }}>
-              {header}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {sec.body.map((line, j) => (
-                  <div
-                    key={`act-${i}-${j}`}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 11, background: PILL_BG, border: `1px solid ${BORDER}`, borderRadius: 11, padding: '11px 13px' }}
-                  >
-                    <span
-                      style={{ flex: '0 0 auto', width: 22, height: 22, borderRadius: '50%', background: ACCENT, color: '#fff', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}
-                    >
-                      {j + 1}
-                    </span>
-                    <span style={{ fontSize: s.action, lineHeight: 1.45, color: INK }}>{inline(stripMarker(line), `act-${i}-${j}`)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )
-        }
-
-        // "What's working" (green) and "What needs attention" (amber) → tinted
-        // callout cards, so the two read as distinct zones rather than one list.
-        if (sec.kind === 'good' || sec.kind === 'warn') {
-          const card =
-            sec.kind === 'good'
-              ? { background: GOOD_BG, border: `1px solid ${GOOD_BORDER}`, borderLeft: `3px solid ${C_GOOD}` }
-              : { background: WARN_BG, border: `1px solid ${WARN_BORDER}`, borderLeft: `3px solid ${C_WARN}` }
-          return (
-            <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 18, borderRadius: 12, padding: '13px 15px 14px', ...card }}>
-              {header}
-              {bullets}
-            </section>
-          )
-        }
-
-        return (
-          <section key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 22 }}>
-            {header}
-            {bullets}
-          </section>
-        )
-      })}
+      {sections.map((sec, i) => (
+        <div key={`sec-${i}`} style={{ marginTop: i === 0 ? 4 : 18 }}>
+          <AnalysisSection section={sec} metrics={metrics} size={size} />
+        </div>
+      ))}
     </div>
   )
 }
