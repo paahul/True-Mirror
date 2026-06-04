@@ -2,7 +2,10 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getReportById } from '@/lib/supabase'
 import { computeDayOverDay } from '@/lib/dayOverDay'
+import { computeScores } from '@/lib/scores'
+import { buildVerdict } from '@/lib/verdict'
 import DayOverDayCard from '@/app/components/DayOverDayCard'
+import Analysis, { VerdictLine } from '@/app/components/Analysis'
 
 export const metadata: Metadata = {
   title: 'True Mirror — Analysis',
@@ -17,32 +20,13 @@ const ACCENT = '#1f6f63'
 const CARD = '#fffdf9'
 const BORDER = '#e7e2d8'
 
-function renderAnalysis(text: string) {
-  return text
-    .split('\n')
-    .filter(Boolean)
-    .map((line, i) => {
-      const parts = line.split(/\*\*(.*?)\*\*/)
-      const content = parts.map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))
-      const isHeader = line.startsWith('**') && parts.length >= 2
-      return isHeader ? (
-        <h2 key={i} style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 600, color: ACCENT, margin: '24px 0 6px' }}>
-          {parts[1]}
-        </h2>
-      ) : (
-        <p key={i} style={{ margin: '8px 0', lineHeight: 1.65, fontSize: 15.5, color: '#3a3a36' }}>
-          {content}
-        </p>
-      )
-    })
-}
-
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const report = await getReportById(id)
   if (!report) notFound()
 
   const dayOverDay = computeDayOverDay(report.raw_data)
+  const verdict = buildVerdict(computeScores(report.raw_data))
 
   const date = new Date(report.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -69,8 +53,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           animationDelay: '.06s',
         }}
       >
+        <VerdictLine text={verdict} size="lg" />
         <DayOverDayCard dod={dayOverDay} />
-        {renderAnalysis(report.analysis)}
+        <Analysis text={report.analysis} size="lg" />
       </article>
 
       <div

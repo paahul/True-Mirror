@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { HistoryResponse, HistoryReport, UserMode } from '@/lib/types'
+import { buildVerdict } from '@/lib/verdict'
 import DayOverDayCard from '@/app/components/DayOverDayCard'
+import Analysis, { VerdictLine } from '@/app/components/Analysis'
 
 const SERIF = "'Newsreader', Georgia, 'Times New Roman', serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -40,26 +42,6 @@ function shortDate(iso: string) {
 }
 function longDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-function renderAnalysis(text: string) {
-  return text
-    .split('\n')
-    .filter(Boolean)
-    .map((line, i) => {
-      const parts = line.split(/\*\*(.*?)\*\*/)
-      const content = parts.map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))
-      const isHeader = line.startsWith('**') && parts.length >= 2
-      return isHeader ? (
-        <h3 key={i} style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: ACCENT, margin: '18px 0 4px' }}>
-          {parts[1]}
-        </h3>
-      ) : (
-        <p key={i} style={{ margin: '6px 0', lineHeight: 1.6, fontSize: 14.5, color: '#3a3a36' }}>
-          {content}
-        </p>
-      )
-    })
 }
 
 // --- Animated circular gauge (with count-up + glow; dark variant) -----------
@@ -296,7 +278,7 @@ function PastCard({ report }: { report: HistoryReport }) {
       {open && (
         <div style={{ marginTop: 8, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
           <DayOverDayCard dod={report.day_over_day} />
-          {renderAnalysis(report.analysis)}
+          <Analysis text={report.analysis} size="sm" />
         </div>
       )}
     </div>
@@ -489,8 +471,9 @@ export default function HistoryClient() {
           </div>
           {/* Light analysis body */}
           <div style={{ padding: '18px 22px 22px' }}>
+            <VerdictLine text={buildVerdict(latest.scores)} />
             <DayOverDayCard dod={latest.day_over_day} />
-            {renderAnalysis(latest.analysis)}
+            <Analysis text={latest.analysis} />
             <ShareRow id={latest.id} />
           </div>
         </section>

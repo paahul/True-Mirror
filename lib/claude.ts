@@ -24,7 +24,7 @@ Format your response in exactly three sections with these bold headers:
 
 **What needs attention** — honest assessment of weak areas with specific numbers (2-3 points)
 
-**Three things to do this week** — concrete, specific actions tied to this person's actual data
+**Three things to do this week** — concrete, specific actions tied to this person's actual data, written as a numbered list ("1.", "2.", "3."), one action per line
 
 Rules:
 - Be direct. Say what the numbers actually mean.
