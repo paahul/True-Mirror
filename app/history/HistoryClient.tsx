@@ -349,7 +349,11 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
   // Hooks must run unconditionally; bail to the linear view after them.
   if (n <= 1) return <Analysis text={text} metrics={metrics} />
 
-  const goTo = (k: number) => setI(Math.max(0, Math.min(n - 1, k)))
+  const goTo = (k: number) => {
+    const j = Math.max(0, Math.min(n - 1, k))
+    if (j !== i) navigator.vibrate?.(6) // subtle tactile tick on phones
+    setI(j)
+  }
   const onDown = (e: React.PointerEvent) => { dragging.current = true; startX.current = e.clientX }
   const onMove = (e: React.PointerEvent) => { if (dragging.current) setDx(e.clientX - startX.current) }
   const end = () => {
@@ -362,19 +366,20 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
 
   const cardStyle = (off: number, kind: Kind): React.CSSProperties => {
     const t = sectionTint(kind)
+    const progress = Math.min(Math.abs(dx) / 280, 1) // 0→1 as the top card is dragged
     const base: React.CSSProperties = {
       position: 'absolute', inset: 0, overflowY: 'auto', boxSizing: 'border-box',
       background: t.bg, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.accent}`,
-      borderRadius: 16, padding: '18px 18px 20px', boxShadow: '0 10px 30px -18px rgba(20,40,32,.45)',
-      transition: dragging.current && off === 0 ? 'none' : 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s',
+      borderRadius: 16, padding: '18px 18px 20px', boxShadow: '0 16px 36px -16px rgba(20,40,32,.5)',
+      transition: dragging.current ? 'none' : 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s',
       touchAction: 'pan-y',
     }
-    // Behind cards peek via centred scale (stays in bounds, so the fly-out can be
-    // clipped at the deck edge without eating the peek).
+    // Behind cards peek via centred scale and RISE toward full size as you drag
+    // the top card away — gives the swipe a sense of anticipation.
     if (off < 0) return { ...base, transform: 'translateX(-130%) rotate(-10deg)', opacity: 0, zIndex: 1, pointerEvents: 'none' }
     if (off === 0) return { ...base, transform: `translateX(${dx}px) rotate(${dx * 0.04}deg)`, zIndex: 30, cursor: 'grab' }
-    if (off === 1) return { ...base, transform: 'scale(0.955)', opacity: 0.6, zIndex: 20, pointerEvents: 'none' }
-    if (off === 2) return { ...base, transform: 'scale(0.91)', opacity: 0.32, zIndex: 10, pointerEvents: 'none' }
+    if (off === 1) return { ...base, transform: `scale(${0.955 + 0.045 * progress})`, opacity: 0.6 + 0.4 * progress, zIndex: 20, pointerEvents: 'none' }
+    if (off === 2) return { ...base, transform: `scale(${0.91 + 0.045 * progress})`, opacity: 0.32 + 0.28 * progress, zIndex: 10, pointerEvents: 'none' }
     return { ...base, transform: 'scale(0.91)', opacity: 0, zIndex: 0, pointerEvents: 'none' }
   }
 
@@ -402,8 +407,10 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
         </div>
       </div>
 
-      {/* The stack (clips the fly-out at its own edge → no page scroll) */}
-      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)', overflow: 'hidden' }}>
+      {/* Clip layer: padding gives the card shadow room; negative margin keeps
+          cards full-width; overflow hidden contains the fly-out (no page scroll). */}
+      <div style={{ overflow: 'hidden', padding: '10px 16px 28px', margin: '0 -16px' }}>
+      <div style={{ position: 'relative', height: 'clamp(300px, 52vh, 520px)' }}>
         {sections.map((sec, k) => {
           const off = k - i
           const active = off === 0
@@ -422,8 +429,9 @@ function AnalysisDeck({ text, metrics }: { text: string; metrics?: MetricSnapsho
           )
         })}
       </div>
+      </div>
 
-      <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 10 }}>
+      <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 2 }}>
         {i < n - 1 ? 'Swipe for the next →' : 'End of analysis'}
       </p>
     </div>
