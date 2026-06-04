@@ -233,26 +233,13 @@ function ScoreChip({ label, value, color }: { label: string; value: string; colo
   )
 }
 
+// Just a link to the standalone report page — used on earlier-summary cards so
+// you can open the full past analysis. (No copy-link; the page lives in a browser.)
 function ShareRow({ id }: { id: string }) {
-  const [copied, setCopied] = useState(false)
-  const copy = useCallback(() => {
-    navigator.clipboard?.writeText(`${window.location.origin}/report/${id}`).then(
-      () => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      },
-      () => {},
-    )
-  }, [id])
   return (
-    <div style={{ display: 'flex', gap: 16, fontSize: 13, marginTop: 14 }}>
-      <a href={`/report/${id}`} target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, textDecoration: 'none', fontWeight: 500 }}>
-        Open ↗
-      </a>
-      <button onClick={copy} style={{ background: 'none', border: 'none', padding: 0, color: MUTED, cursor: 'pointer', fontSize: 13 }}>
-        {copied ? 'Copied!' : 'Copy link'}
-      </button>
-    </div>
+    <a href={`/report/${id}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 12, color: ACCENT, textDecoration: 'none', fontWeight: 500, fontSize: 13 }}>
+      Open full analysis ↗
+    </a>
   )
 }
 
@@ -474,9 +461,9 @@ function Deck({ cards }: { cards: DeckCard[] }) {
         </div>
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 2 }}>
-        {i < n - 1 ? 'Swipe for the next →' : 'End of your read'}
-      </p>
+      {i < n - 1 && (
+        <p style={{ textAlign: 'center', fontSize: 12, color: MUTED, marginTop: 2 }}>Swipe for the next →</p>
+      )}
     </div>
   )
 }
@@ -636,49 +623,32 @@ export default function HistoryClient() {
         return (
           <section style={{ margin: '22px 0 26px', ...anim() }}>
             <Deck cards={deckCards} />
-            <div style={{ marginTop: 10 }}><ShareRow id={latest.id} /></div>
           </section>
         )
       })()}
 
-      {/* Personalisation — collapsed into an invite by default to keep the page calm */}
-      <section style={{ marginBottom: 26, ...anim() }}>
-        {!showSettings ? (
-          <button
-            onClick={() => setShowSettings(true)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              textAlign: 'left',
-              background: '#f3f8f6',
-              border: `1px solid #d6e7e1`,
-              borderLeft: `3px solid ${ACCENT}`,
-              borderRadius: 12,
-              padding: '14px 16px',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flex: '0 0 auto' }}>
-              <circle cx="12" cy="12" r="8" />
-              <circle cx="12" cy="12" r="3.2" />
-            </svg>
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: INK }}>Tell us how you use your Watch</span>
-              <span style={{ display: 'block', fontSize: 12.5, color: MUTED, marginTop: 1 }}>for even more personalised coaching</span>
-            </span>
-            <span style={{ fontSize: 22, color: ACCENT, lineHeight: 1 }}>›</span>
-          </button>
-        ) : (
-          <div style={{ border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>How you use your Watch</span>
-              <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', padding: 0, color: ACCENT, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
-                Done
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
+      {/* Trends — only once there's enough history to be meaningful */}
+      {showTrends && (
+        <section style={{ marginBottom: 26, ...anim() }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, marginBottom: 14 }}>Trends</h2>
+          <ScoreChart title="Recovery" points={recoveryPts} color={GREEN} />
+          <ScoreChart title="Sleep" points={sleepPts} color={SLEEP_BLUE} />
+        </section>
+      )}
+
+      {/* Footer — utilities kept quiet so the read owns the page */}
+      <footer style={{ marginTop: 36, borderTop: `1px solid ${BORDER}`, ...anim() }}>
+        <button
+          onClick={() => setShowSettings((o) => !o)}
+          style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer', fontSize: 14, color: MUTED }}
+        >
+          <span>Tell us how you use your Watch</span>
+          <span style={{ fontSize: 16, color: ACCENT, transform: showSettings ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>›</span>
+        </button>
+        {showSettings && (
+          <div style={{ padding: '0 0 16px' }}>
+            <p style={{ fontSize: 12.5, color: MUTED, margin: '0 0 10px' }}>Sharpens your coaching to how you actually train.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {(Object.keys(MODE_LABELS) as UserMode[]).map((m) => {
                 const active = data.user.mode === m
                 return (
@@ -686,16 +656,7 @@ export default function HistoryClient() {
                     key={m}
                     disabled={savingSetting}
                     onClick={() => !active && updateSetting({ mode: m })}
-                    style={{
-                      fontSize: 13,
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      border: active ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`,
-                      background: active ? ACCENT : '#fff',
-                      color: active ? '#fff' : '#444',
-                      cursor: active ? 'default' : 'pointer',
-                      transition: 'all .2s ease',
-                    }}
+                    style={{ fontSize: 13, padding: '6px 12px', borderRadius: 8, border: active ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`, background: active ? ACCENT : '#fff', color: active ? '#fff' : '#444', cursor: active ? 'default' : 'pointer', transition: 'all .2s ease' }}
                   >
                     {MODE_LABELS[m]}
                   </button>
@@ -711,42 +672,21 @@ export default function HistoryClient() {
             )}
           </div>
         )}
-      </section>
 
-      {/* Trends — only once there's enough history to be meaningful */}
-      {showTrends && (
-        <section style={{ marginBottom: 26, ...anim() }}>
-          <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, marginBottom: 14 }}>Trends</h2>
-          <ScoreChart title="Recovery" points={recoveryPts} color={GREEN} />
-          <ScoreChart title="Sleep" points={sleepPts} color={SLEEP_BLUE} />
-        </section>
-      )}
-
-      {/* Earlier analyses — collapsed by default to keep the page focused on today */}
-      {data.reports.length > 1 && (
-        <section style={anim()}>
-          <button
-            onClick={() => setShowEarlier((o) => !o)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'none',
-              border: 'none',
-              padding: '4px 0',
-              cursor: 'pointer',
-              marginBottom: showEarlier ? 14 : 0,
-            }}
-          >
-            <h2 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, margin: 0 }}>
-              Earlier analyses <span style={{ color: MUTED, fontWeight: 400 }}>({data.reports.length - 1})</span>
-            </h2>
-            <span style={{ fontSize: 18, color: MUTED, transform: showEarlier ? 'rotate(90deg)' : 'none', transition: 'transform .2s ease' }}>›</span>
-          </button>
-          {showEarlier && <ReportDeck reports={data.reports.slice(1)} />}
-        </section>
-      )}
+        {data.reports.length > 1 && (
+          <>
+            <div style={{ borderTop: `1px solid ${BORDER}` }} />
+            <button
+              onClick={() => setShowEarlier((o) => !o)}
+              style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer', fontSize: 14, color: MUTED }}
+            >
+              <span>Earlier analyses <span style={{ color: '#a39e93' }}>({data.reports.length - 1})</span></span>
+              <span style={{ fontSize: 16, color: ACCENT, transform: showEarlier ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>›</span>
+            </button>
+            {showEarlier && <div style={{ paddingBottom: 16 }}><ReportDeck reports={data.reports.slice(1)} /></div>}
+          </>
+        )}
+      </footer>
 
       {data.reports.length === 0 && (
         <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.6, ...anim() }}>
