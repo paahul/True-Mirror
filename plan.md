@@ -88,6 +88,16 @@ Ordered by value × on-brand-ness × effort. All optional; it's a working person
 5. **Dynamic source-filter research** (M9) — the "pick your wearable" feasibility check.
 6. **Email reminders** (M8) — Resend + Vercel Pro.
 
+### Pending — Paahul to do
+- **📸 Capture + wire README screenshots.** Shoot the deck on a phone (cover → "needs
+  attention" w/ chip → a "this week" card) + the homepage sample. Drop in `docs/screenshots/`
+  per [`docs/screenshots/CAPTURE.md`](docs/screenshots/CAPTURE.md), then the README block is ready
+  to paste. (A screen-recorded swipe GIF at the top of the README would be the strongest asset.)
+- **🔧 Local toolchain:** `brew reinstall node` — Homebrew bumped llhttp and broke node 25.9.0.
+- **📲 Wire the Shortcut daily arrays** (`hrv_daily`, `rhr_daily`, …) — lights up day-over-day,
+  chip deltas, and trend tiles; makes the homepage sample fully truthful. See
+  [`docs/shortcut-enrichment-build.md`](docs/shortcut-enrichment-build.md).
+
 (The "Phase" sections below predate this ordering and map roughly to these milestones.)
 
 ---

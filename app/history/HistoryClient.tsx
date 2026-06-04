@@ -346,21 +346,6 @@ function CoverCard({ latest, prev }: { latest: HistoryReport; prev: HistoryRepor
   )
 }
 
-// One "Three things to do this week" action as its own focused flashcard.
-function ActionFace({ index, total, text }: { index: number; total: number; text: string }) {
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 22 }}>
-      <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700 }}>
-        This week · {index} of {total}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <span style={{ flex: '0 0 auto', width: 34, height: 34, borderRadius: '50%', background: ACCENT, color: '#fff', fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>{index}</span>
-        <p style={{ fontFamily: SERIF, fontSize: 23, lineHeight: 1.32, color: INK, margin: 0 }}>{text}</p>
-      </div>
-    </div>
-  )
-}
-
 interface DeckCard { key: string; node: React.ReactNode; bg: string; accent: string; dark?: boolean }
 
 // The whole read as one stacked swipe deck. Card 1 is the cover; swipe (or fling,
@@ -630,17 +615,7 @@ export default function HistoryClient() {
         if (sections.length) {
           sections.forEach((sec, k) => {
             const t = sectionTint(sec.kind)
-            if (sec.kind === 'actions') {
-              // Each action becomes its own flashcard — the read's climax.
-              const items = sec.body
-                .map((l) => l.replace(/^\s*(?:\d+[.)]|[-•*])\s+/, '').replace(/\*\*/g, '').trim())
-                .filter(Boolean)
-              items.forEach((txt, a) => {
-                deckCards.push({ key: `a${k}-${a}`, accent: t.accent, bg: t.bg, node: <ActionFace index={a + 1} total={items.length} text={txt} /> })
-              })
-            } else {
-              deckCards.push({ key: `s${k}`, accent: t.accent, bg: t.bg, node: <AnalysisSection section={sec} metrics={latest.metrics} framed={false} size="lg" kicker={KICK[sec.kind]} /> })
-            }
+            deckCards.push({ key: `s${k}`, accent: t.accent, bg: t.bg, node: <AnalysisSection section={sec} metrics={latest.metrics} framed={false} size="lg" kicker={KICK[sec.kind]} /> })
           })
         } else {
           deckCards.push({ key: 'full', accent: ACCENT, bg: '#fffdf9', node: <Analysis text={latest.analysis} metrics={latest.metrics} /> })
