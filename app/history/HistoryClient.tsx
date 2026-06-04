@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { HistoryResponse, HistoryReport, UserMode } from '@/lib/types'
 import { buildVerdict } from '@/lib/verdict'
@@ -256,35 +256,81 @@ function ShareRow({ id }: { id: string }) {
   )
 }
 
-function PastCard({ report }: { report: HistoryReport }) {
-  const [open, setOpen] = useState(false)
-  const { scores } = report
+// Swipeable deck of past reports — one summary card at a time, with a position
+// anchor (counter + dots) up top. Native scroll-snap = real swipe feel on phones.
+function ReportDeck({ reports }: { reports: HistoryReport[] }) {
+  const scroller = useRef<HTMLDivElement>(null)
+  const [idx, setIdx] = useState(0)
+  const n = reports.length
+
+  const step = () => {
+    const el = scroller.current
+    const first = el?.firstElementChild as HTMLElement | null
+    return first ? first.offsetWidth + 12 : el?.clientWidth ?? 1
+  }
+  const onScroll = () => {
+    const el = scroller.current
+    if (el) setIdx(Math.max(0, Math.min(n - 1, Math.round(el.scrollLeft / step()))))
+  }
+  const goTo = (i: number) => scroller.current?.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * step(), behavior: 'smooth' })
+
+  const arrow = (disabled: boolean): React.CSSProperties => ({
+    width: 28, height: 28, borderRadius: '50%', border: `1px solid ${BORDER}`, background: '#fff',
+    color: disabled ? '#cfc9bd' : ACCENT, cursor: disabled ? 'default' : 'pointer', fontSize: 16, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+  })
+
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 12 }}>
-      <div style={{ fontSize: 13, color: MUTED, marginBottom: 10 }}>{longDate(report.created_at)}</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-        {scores.recovery != null && <ScoreChip label="Recovery" value={String(scores.recovery)} color={recoveryColor(scores.recovery)} />}
-        {scores.sleep != null && <ScoreChip label="Sleep" value={String(scores.sleep)} color={sleepColor(scores.sleep)} />}
-        {scores.strain != null && <ScoreChip label="Strain" value={String(scores.strain)} color={STRAIN} />}
-        {scores.stress != null && <ScoreChip label="Stress" value={scores.stress} color={stressColor(scores.stress)} />}
-      </div>
-      <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          style={{ background: 'none', border: 'none', padding: 0, color: INK, cursor: 'pointer', fontSize: 13, fontWeight: 500, textDecoration: 'underline' }}
-        >
-          {open ? 'Hide analysis' : 'Show analysis'}
-        </button>
-        <a href={`/report/${report.id}`} target="_blank" rel="noopener noreferrer" style={{ color: MUTED, textDecoration: 'none' }}>
-          Open ↗
-        </a>
-      </div>
-      {open && (
-        <div style={{ marginTop: 8, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-          <DayOverDayCard dod={report.day_over_day} />
-          <Analysis text={report.analysis} metrics={report.metrics} size="sm" />
+    <div>
+      {/* Position anchor */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>{idx + 1} of {n}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {n <= 8 && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              {reports.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to analysis ${i + 1}`}
+                  style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer', background: i === idx ? ACCENT : '#d8d2c6', transition: 'background .2s' }}
+                />
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => goTo(idx - 1)} disabled={idx === 0} aria-label="Previous" style={arrow(idx === 0)}>‹</button>
+            <button onClick={() => goTo(idx + 1)} disabled={idx === n - 1} aria-label="Next" style={arrow(idx === n - 1)}>›</button>
+          </div>
         </div>
-      )}
+      </div>
+
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="tm-deck"
+        style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'none', paddingBottom: 2 }}
+      >
+        {reports.map((r) => {
+          const v = buildVerdict(r.scores)
+          return (
+            <div
+              key={r.id}
+              style={{ flex: '0 0 86%', scrollSnapAlign: 'center', boxSizing: 'border-box', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 16 }}
+            >
+              <div style={{ fontSize: 13, color: MUTED, marginBottom: 10 }}>{longDate(r.created_at)}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                {r.scores.recovery != null && <ScoreChip label="Recovery" value={String(r.scores.recovery)} color={recoveryColor(r.scores.recovery)} />}
+                {r.scores.sleep != null && <ScoreChip label="Sleep" value={String(r.scores.sleep)} color={sleepColor(r.scores.sleep)} />}
+                {r.scores.strain != null && <ScoreChip label="Strain" value={String(r.scores.strain)} color={STRAIN} />}
+                {r.scores.stress != null && <ScoreChip label="Stress" value={r.scores.stress} color={stressColor(r.scores.stress)} />}
+              </div>
+              {v && <p style={{ fontFamily: SERIF, fontSize: 16, lineHeight: 1.4, color: INK, margin: '0 0 12px' }}>{v}</p>}
+              <ShareRow id={r.id} />
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -293,6 +339,7 @@ const keyframes = `
 @keyframes tmFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tmFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tmDraw { from { stroke-dashoffset: 1400; } to { stroke-dashoffset: 0; } }
+.tm-deck::-webkit-scrollbar { display: none; }
 `
 
 export default function HistoryClient() {
@@ -593,7 +640,7 @@ export default function HistoryClient() {
             </h2>
             <span style={{ fontSize: 18, color: MUTED, transform: showEarlier ? 'rotate(90deg)' : 'none', transition: 'transform .2s ease' }}>›</span>
           </button>
-          {showEarlier && data.reports.slice(1).map((r) => <PastCard key={r.id} report={r} />)}
+          {showEarlier && <ReportDeck reports={data.reports.slice(1)} />}
         </section>
       )}
 
